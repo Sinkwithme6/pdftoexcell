@@ -1,1422 +1,1012 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Bank Transaction Extractor</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Bank Transaction Extractor</title>
 
-  <!-- ============================================================
-       BANK TRANSACTION EXTRACTOR — Self-Contained Single File
-       ============================================================
-       HOW TO USE ON YOUR WEBSITE:
-       1. Open this file in a text editor
-       2. Find "YOUR_API_KEY_HERE" below and replace with your
-          Anthropic API key (get one at console.anthropic.com)
-       3. Upload this file to your web server or embed it in
-          your site via <iframe src="bank-extractor.html">
-       
-       ⚠️  SECURITY NOTE: For production use, move the API call
-           to your backend server so your key is never exposed.
-           See the README comment at the bottom for a backend
-           proxy example.
-       ============================================================ -->
+<!-- ─── External Libraries ────────────────────────────────────────────────── -->
+<!-- PDF.js for digital PDF text extraction -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<!-- SheetJS for Excel/CSV generation -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
-  <!-- ─── External Libraries (loaded from CDN) ─── -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+/* ─── CSS Variables & Reset ────────────────────────────────────────────── */
+:root {
+  --ink:        #0d1117;
+  --ink-mid:    #3d4451;
+  --ink-light:  #6b7280;
+  --paper:      #f5f6fa;
+  --white:      #ffffff;
+  --accent:     #1a56db;
+  --accent-lt:  #e8effe;
+  --accent-glow:#3b82f6;
+  --success:    #059669;
+  --success-lt: #d1fae5;
+  --warning:    #d97706;
+  --warning-lt: #fef3c7;
+  --danger:     #dc2626;
+  --danger-lt:  #fee2e2;
+  --border:     #e2e8f0;
+  --shadow-sm:  0 1px 3px rgba(0,0,0,.08);
+  --shadow-md:  0 4px 16px rgba(0,0,0,.10);
+  --shadow-lg:  0 8px 32px rgba(0,0,0,.14);
+  --radius:     12px;
+  --radius-sm:  8px;
+}
 
-  <style>
-    /* ─── Reset & Base ─── */
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html { font-size: 16px; }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{
+  font-family:'DM Sans','Segoe UI',sans-serif;
+  background:var(--paper);
+  color:var(--ink);
+  min-height:100vh;
+  font-size:15px;
+  line-height:1.6;
+}
 
-    body {
-      font-family: 'DM Sans', system-ui, sans-serif;
-      background: #F4F6FA;
-      color: #111827;
-      min-height: 100vh;
-      -webkit-font-smoothing: antialiased;
-    }
+/* ─── Import DM Sans from Google ────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
 
-    /* ─── CSS Variables ─── */
-    :root {
-      --navy:        #0D1B35;
-      --navy-mid:    #162444;
-      --navy-light:  #1E3163;
-      --blue:        #2563EB;
-      --blue-light:  #3B82F6;
-      --blue-pale:   #EFF6FF;
-      --green:       #059669;
-      --green-pale:  #ECFDF5;
-      --red:         #DC2626;
-      --red-pale:    #FEF2F2;
-      --amber:       #D97706;
-      --amber-pale:  #FFFBEB;
-      --gray-50:     #F9FAFB;
-      --gray-100:    #F3F4F6;
-      --gray-200:    #E5E7EB;
-      --gray-300:    #D1D5DB;
-      --gray-400:    #9CA3AF;
-      --gray-500:    #6B7280;
-      --gray-700:    #374151;
-      --gray-900:    #111827;
-      --radius-sm:   6px;
-      --radius-md:   10px;
-      --radius-lg:   14px;
-      --radius-xl:   20px;
-      --shadow-sm:   0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.05);
-      --shadow-md:   0 4px 12px rgba(0,0,0,0.10), 0 2px 4px rgba(0,0,0,0.06);
-      --shadow-lg:   0 10px 30px rgba(0,0,0,0.12), 0 4px 8px rgba(0,0,0,0.06);
-    }
+/* ─── Layout ─────────────────────────────────────────────────────────────── */
+.app-wrap{max-width:1140px;margin:0 auto;padding:0 20px 60px;}
 
-    /* ─── Layout ─── */
-    .app-wrapper {
-      max-width: 960px;
-      margin: 0 auto;
-      padding: 0 20px 60px;
-    }
+/* ─── Header ─────────────────────────────────────────────────────────────── */
+.app-header{
+  background:linear-gradient(135deg,#0f2d6b 0%,#1a56db 60%,#2563eb 100%);
+  color:#fff;
+  padding:0 20px;
+  position:sticky;top:0;z-index:100;
+  box-shadow:0 2px 12px rgba(26,86,219,.35);
+}
+.header-inner{
+  max-width:1140px;margin:0 auto;
+  display:flex;align-items:center;gap:14px;
+  height:64px;
+}
+.header-icon{font-size:26px;}
+.header-title{font-size:20px;font-weight:700;letter-spacing:-.3px;}
+.header-sub{font-size:13px;opacity:.75;font-weight:400;}
+.header-badge{
+  margin-left:auto;
+  background:rgba(255,255,255,.18);
+  border:1px solid rgba(255,255,255,.3);
+  border-radius:20px;padding:4px 14px;
+  font-size:12px;font-weight:500;
+}
 
-    /* ─── Header ─── */
-    .site-header {
-      background: var(--navy);
-      padding: 0;
-      margin-bottom: 32px;
-    }
-    .header-inner {
-      max-width: 960px;
-      margin: 0 auto;
-      padding: 20px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .brand-icon {
-      width: 38px; height: 38px;
-      background: var(--blue);
-      border-radius: var(--radius-md);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 18px;
-      flex-shrink: 0;
-    }
-    .brand-name {
-      font-size: 17px;
-      font-weight: 600;
-      color: #fff;
-      letter-spacing: -0.3px;
-    }
-    .brand-tagline {
-      font-size: 12px;
-      color: rgba(255,255,255,0.45);
-      margin-top: 1px;
-    }
-    .header-pill {
-      font-size: 11px;
-      font-family: 'DM Mono', monospace;
-      color: rgba(255,255,255,0.4);
-      background: rgba(255,255,255,0.07);
-      border: 1px solid rgba(255,255,255,0.1);
-      padding: 4px 12px;
-      border-radius: 20px;
-      letter-spacing: 0.5px;
-    }
+/* ─── Section Title ───────────────────────────────────────────────────────── */
+.section-title{
+  font-size:13px;font-weight:600;
+  text-transform:uppercase;letter-spacing:.8px;
+  color:var(--ink-light);margin-bottom:14px;
+  display:flex;align-items:center;gap:8px;
+}
+.section-title::after{content:'';flex:1;height:1px;background:var(--border);}
 
-    /* ─── API Key Banner ─── */
-    .api-key-banner {
-      background: #fff;
-      border: 1px solid var(--gray-200);
-      border-radius: var(--radius-lg);
-      padding: 16px 20px;
-      margin-bottom: 20px;
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      box-shadow: var(--shadow-sm);
-    }
-    .api-key-icon {
-      font-size: 22px;
-      flex-shrink: 0;
-    }
-    .api-key-label {
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--gray-700);
-      margin-bottom: 2px;
-    }
-    .api-key-sub {
-      font-size: 12px;
-      color: var(--gray-500);
-    }
-    .api-key-input-wrap {
-      display: flex;
-      gap: 8px;
-      margin-left: auto;
-      align-items: center;
-    }
-    .api-key-input {
-      font-family: 'DM Mono', monospace;
-      font-size: 12px;
-      padding: 8px 12px;
-      border: 1px solid var(--gray-200);
-      border-radius: var(--radius-sm);
-      width: 240px;
-      color: var(--gray-700);
-      background: var(--gray-50);
-      outline: none;
-      transition: border-color 0.2s;
-    }
-    .api-key-input:focus { border-color: var(--blue); background: #fff; }
-    .btn-save-key {
-      font-family: 'DM Sans', sans-serif;
-      font-size: 12px;
-      font-weight: 600;
-      padding: 8px 14px;
-      background: var(--navy);
-      color: #fff;
-      border: none;
-      border-radius: var(--radius-sm);
-      cursor: pointer;
-      white-space: nowrap;
-      transition: background 0.15s;
-    }
-    .btn-save-key:hover { background: var(--navy-light); }
-    .key-status {
-      font-size: 11px;
-      padding: 3px 10px;
-      border-radius: 20px;
-      font-weight: 600;
-    }
-    .key-status.set   { background: var(--green-pale); color: var(--green); }
-    .key-status.unset { background: var(--red-pale);   color: var(--red); }
+/* ─── Card ───────────────────────────────────────────────────────────────── */
+.card{
+  background:var(--white);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow-sm);
+  padding:24px;
+  transition:box-shadow .2s;
+}
+.card:hover{box-shadow:var(--shadow-md);}
 
-    /* ─── Section Labels ─── */
-    .section-label {
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-      color: var(--gray-400);
-      margin-bottom: 10px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .section-label::after {
-      content: '';
-      flex: 1;
-      height: 1px;
-      background: var(--gray-200);
-    }
+/* ─── Upload Zone ─────────────────────────────────────────────────────────── */
+#drop-zone{
+  border:2px dashed var(--border);
+  border-radius:var(--radius);
+  background:var(--accent-lt);
+  padding:48px 24px;
+  text-align:center;
+  cursor:pointer;
+  transition:all .2s;
+  position:relative;
+}
+#drop-zone.drag-over{
+  border-color:var(--accent);
+  background:#dbeafe;
+  transform:scale(1.01);
+}
+#drop-zone input[type=file]{
+  position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;
+}
+.dz-icon{font-size:48px;display:block;margin-bottom:12px;}
+.dz-headline{font-size:18px;font-weight:600;color:var(--accent);margin-bottom:6px;}
+.dz-sub{font-size:13px;color:var(--ink-light);}
+.btn-upload{
+  display:inline-flex;align-items:center;gap:8px;
+  background:var(--accent);color:#fff;
+  border:none;border-radius:var(--radius-sm);
+  padding:10px 22px;font-size:14px;font-weight:600;
+  cursor:pointer;margin-top:16px;
+  transition:background .15s,transform .1s,box-shadow .15s;
+  box-shadow:0 2px 8px rgba(26,86,219,.35);
+}
+.btn-upload:hover{background:#1648c0;transform:translateY(-1px);box-shadow:0 4px 14px rgba(26,86,219,.45);}
+.btn-upload:active{transform:translateY(0);}
 
-    /* ─── Card ─── */
-    .card {
-      background: #fff;
-      border: 1px solid var(--gray-200);
-      border-radius: var(--radius-lg);
-      box-shadow: var(--shadow-sm);
-      margin-bottom: 20px;
-      overflow: hidden;
-    }
-    .card-body { padding: 20px; }
-    .card-header {
-      padding: 14px 20px;
-      background: var(--gray-50);
-      border-bottom: 1px solid var(--gray-200);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .card-title {
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--gray-700);
-    }
+/* ─── File Chips ──────────────────────────────────────────────────────────── */
+#file-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;}
+.file-chip{
+  display:inline-flex;align-items:center;gap:6px;
+  background:#e8effe;border:1px solid #c7d7fb;
+  border-radius:20px;padding:4px 12px 4px 8px;
+  font-size:12px;font-weight:500;color:var(--accent);
+  animation:popIn .2s ease;
+}
+@keyframes popIn{from{opacity:0;transform:scale(.85);}to{opacity:1;transform:scale(1);}}
+.file-chip .chip-remove{
+  cursor:pointer;opacity:.6;transition:opacity .15s;
+  background:none;border:none;font-size:14px;color:var(--accent);
+}
+.file-chip .chip-remove:hover{opacity:1;}
 
-    /* ─── Upload Zone ─── */
-    .upload-zone {
-      border: 2px dashed var(--gray-200);
-      border-radius: var(--radius-lg);
-      padding: 40px 24px;
-      text-align: center;
-      cursor: pointer;
-      transition: border-color 0.2s, background 0.2s;
-      background: var(--gray-50);
-      position: relative;
-      margin-bottom: 16px;
-    }
-    .upload-zone:hover,
-    .upload-zone.drag-over {
-      border-color: var(--blue);
-      background: var(--blue-pale);
-    }
-    .upload-zone input[type="file"] {
-      position: absolute;
-      inset: 0;
-      opacity: 0;
-      cursor: pointer;
-      width: 100%;
-      height: 100%;
-    }
-    .upload-icon-wrap {
-      width: 56px; height: 56px;
-      background: linear-gradient(135deg, var(--blue-pale), #DBEAFE);
-      border-radius: var(--radius-lg);
-      display: flex; align-items: center; justify-content: center;
-      margin: 0 auto 16px;
-      font-size: 24px;
-    }
-    .upload-title {
-      font-size: 16px;
-      font-weight: 600;
-      color: var(--gray-700);
-      margin-bottom: 6px;
-    }
-    .upload-sub {
-      font-size: 13px;
-      color: var(--gray-400);
-      max-width: 380px;
-      margin: 0 auto 14px;
-      line-height: 1.5;
-    }
-    .upload-tag {
-      display: inline-block;
-      font-size: 11px;
-      font-family: 'DM Mono', monospace;
-      color: var(--blue);
-      background: var(--blue-pale);
-      border: 1px solid #BFDBFE;
-      padding: 4px 12px;
-      border-radius: 20px;
-    }
+/* ─── Process Button ──────────────────────────────────────────────────────── */
+.action-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:20px;}
+.btn-process{
+  display:inline-flex;align-items:center;gap:8px;
+  background:linear-gradient(135deg,#0f2d6b,#1a56db);
+  color:#fff;border:none;border-radius:var(--radius-sm);
+  padding:12px 28px;font-size:15px;font-weight:600;
+  cursor:pointer;transition:all .15s;
+  box-shadow:0 3px 12px rgba(26,86,219,.4);
+}
+.btn-process:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 6px 20px rgba(26,86,219,.45);}
+.btn-process:disabled{opacity:.45;cursor:not-allowed;transform:none;}
+.btn-clear{
+  background:transparent;border:1px solid var(--border);
+  border-radius:var(--radius-sm);padding:12px 20px;
+  font-size:14px;font-weight:500;cursor:pointer;
+  color:var(--ink-mid);transition:all .15s;
+}
+.btn-clear:hover{background:var(--paper);border-color:#aab;}
 
-    /* ─── File List ─── */
-    .file-list {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      margin-bottom: 20px;
-    }
-    .file-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 14px;
-      background: #fff;
-      border: 1px solid var(--gray-200);
-      border-radius: var(--radius-md);
-      transition: border-color 0.15s;
-    }
-    .file-item:hover { border-color: var(--gray-300); }
-    .file-pdf-icon {
-      width: 32px; height: 32px;
-      background: #FEE2E2;
-      border-radius: 6px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 14px;
-      flex-shrink: 0;
-    }
-    .file-meta { flex: 1; min-width: 0; }
-    .file-name {
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--gray-700);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .file-size {
-      font-size: 11px;
-      color: var(--gray-400);
-      font-family: 'DM Mono', monospace;
-    }
-    .file-dot {
-      width: 8px; height: 8px;
-      border-radius: 50%;
-      flex-shrink: 0;
-    }
-    .file-dot.ready   { background: #10B981; }
-    .file-dot.loading { background: var(--blue); animation: blink 1s infinite; }
-    .file-dot.error   { background: var(--red); }
-    .file-remove-btn {
-      background: none;
-      border: none;
-      color: var(--gray-400);
-      cursor: pointer;
-      font-size: 18px;
-      line-height: 1;
-      padding: 2px 4px;
-      border-radius: 4px;
-      transition: color 0.15s, background 0.15s;
-      flex-shrink: 0;
-    }
-    .file-remove-btn:hover { color: var(--red); background: var(--red-pale); }
+/* ─── Progress ────────────────────────────────────────────────────────────── */
+#progress-section{display:none;}
+.progress-bar-wrap{
+  background:#e8effe;border-radius:20px;height:10px;overflow:hidden;margin:10px 0;
+}
+.progress-bar-fill{
+  height:100%;background:linear-gradient(90deg,#1a56db,#60a5fa);
+  border-radius:20px;
+  transition:width .4s ease;
+  width:0%;
+}
+.progress-label{font-size:13px;color:var(--ink-light);}
 
-    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.35} }
+/* ─── Stats Bar ───────────────────────────────────────────────────────────── */
+#stats-bar{display:none;}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;}
+.stat-box{
+  background:var(--white);border:1px solid var(--border);
+  border-radius:var(--radius-sm);padding:16px 20px;
+  text-align:center;
+}
+.stat-label{font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:var(--ink-light);margin-bottom:4px;}
+.stat-value{font-size:22px;font-weight:700;color:var(--ink);font-family:'DM Mono',monospace;}
+.stat-value.credit{color:var(--success);}
+.stat-value.debit{color:var(--danger);}
 
-    /* ─── Action Bar ─── */
-    .action-bar {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-    .btn {
-      font-family: 'DM Sans', sans-serif;
-      font-size: 13px;
-      font-weight: 600;
-      padding: 10px 20px;
-      border-radius: var(--radius-md);
-      cursor: pointer;
-      border: none;
-      transition: all 0.15s;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      text-decoration: none;
-    }
-    .btn-primary {
-      background: var(--blue);
-      color: #fff;
-    }
-    .btn-primary:hover:not(:disabled) { background: var(--blue-light); transform: translateY(-1px); }
-    .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
-    .btn-ghost {
-      background: transparent;
-      color: var(--gray-500);
-      border: 1px solid var(--gray-200);
-    }
-    .btn-ghost:hover { background: var(--gray-50); color: var(--gray-700); }
-    .status-text {
-      margin-left: auto;
-      font-size: 12px;
-      font-family: 'DM Mono', monospace;
-      color: var(--gray-400);
-    }
+/* ─── Validation Banner ───────────────────────────────────────────────────── */
+#validation-banner{display:none;margin-top:14px;}
+.banner{
+  border-radius:var(--radius-sm);padding:14px 18px;
+  display:flex;align-items:flex-start;gap:12px;
+  font-size:14px;
+}
+.banner.success{background:var(--success-lt);border:1px solid #6ee7b7;color:#065f46;}
+.banner.warning{background:var(--warning-lt);border:1px solid #fcd34d;color:#92400e;}
+.banner.error  {background:var(--danger-lt);border:1px solid #fca5a5;color:#991b1b;}
+.banner-icon{font-size:18px;flex-shrink:0;}
 
-    /* ─── Progress ─── */
-    .progress-section {
-      margin-bottom: 20px;
-      display: none;
-    }
-    .progress-bar {
-      height: 4px;
-      background: var(--gray-200);
-      border-radius: 4px;
-      overflow: hidden;
-      margin-bottom: 8px;
-    }
-    .progress-fill {
-      height: 100%;
-      background: linear-gradient(90deg, var(--blue), var(--blue-light));
-      border-radius: 4px;
-      transition: width 0.4s ease;
-      width: 0%;
-    }
-    .progress-label {
-      font-size: 12px;
-      font-family: 'DM Mono', monospace;
-      color: var(--gray-400);
-    }
+/* ─── Transaction Table ───────────────────────────────────────────────────── */
+#table-section{display:none;}
+.table-toolbar{
+  display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;
+}
+.search-box{
+  flex:1;min-width:200px;
+  border:1px solid var(--border);border-radius:var(--radius-sm);
+  padding:8px 14px;font-size:14px;color:var(--ink);
+  outline:none;transition:border-color .15s;
+}
+.search-box:focus{border-color:var(--accent);}
+.filter-select{
+  border:1px solid var(--border);border-radius:var(--radius-sm);
+  padding:8px 12px;font-size:13px;color:var(--ink-mid);
+  background:var(--white);cursor:pointer;outline:none;
+}
+.table-wrap{overflow-x:auto;border-radius:var(--radius-sm);border:1px solid var(--border);}
+table{width:100%;border-collapse:collapse;font-size:13.5px;}
+thead th{
+  background:#f0f4ff;padding:11px 14px;
+  text-align:left;font-weight:600;font-size:12px;
+  text-transform:uppercase;letter-spacing:.5px;
+  color:var(--ink-mid);border-bottom:1px solid var(--border);
+  white-space:nowrap;
+}
+tbody tr{border-bottom:1px solid var(--border);transition:background .1s;}
+tbody tr:last-child{border-bottom:none;}
+tbody tr:hover{background:#f8f9ff;}
+tbody td{padding:10px 14px;vertical-align:middle;}
+.amount-credit{color:var(--success);font-weight:600;font-family:'DM Mono',monospace;}
+.amount-debit {color:var(--danger);font-weight:600;font-family:'DM Mono',monospace;}
+.amount-neutral{color:var(--ink-mid);font-weight:600;font-family:'DM Mono',monospace;}
+.badge{
+  display:inline-block;border-radius:20px;padding:2px 10px;
+  font-size:11px;font-weight:600;white-space:nowrap;
+}
+.badge-salary   {background:#d1fae5;color:#065f46;}
+.badge-rent     {background:#fee2e2;color:#991b1b;}
+.badge-utilities{background:#fef3c7;color:#92400e;}
+.badge-deposit  {background:#dbeafe;color:#1e40af;}
+.badge-transfer {background:#ede9fe;color:#5b21b6;}
+.badge-food     {background:#fce7f3;color:#9d174d;}
+.badge-misc     {background:#f1f5f9;color:#475569;}
+.date-cell{font-family:'DM Mono',monospace;font-size:12.5px;white-space:nowrap;}
+.desc-cell{max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 
-    /* ─── Log Console ─── */
-    .log-console {
-      background: var(--navy);
-      border-radius: var(--radius-md);
-      padding: 14px 16px;
-      font-family: 'DM Mono', monospace;
-      font-size: 11px;
-      max-height: 120px;
-      overflow-y: auto;
-      display: none;
-      gap: 4px;
-      flex-direction: column;
-      margin-bottom: 20px;
-    }
-    .log-line { display: flex; gap: 8px; }
-    .log-time { color: rgba(255,255,255,0.25); flex-shrink: 0; }
-    .log-msg-ok   { color: #34D399; }
-    .log-msg-warn { color: #FCD34D; }
-    .log-msg-err  { color: #F87171; }
-    .log-msg-info { color: rgba(255,255,255,0.5); }
+/* ─── Download Button ─────────────────────────────────────────────────────── */
+#download-section{display:none;}
+.btn-download{
+  display:inline-flex;align-items:center;gap:10px;
+  background:linear-gradient(135deg,#065f46,#059669);
+  color:#fff;border:none;border-radius:var(--radius-sm);
+  padding:14px 32px;font-size:16px;font-weight:700;
+  cursor:pointer;transition:all .15s;
+  box-shadow:0 3px 14px rgba(5,150,105,.4);
+}
+.btn-download:hover{transform:translateY(-2px);box-shadow:0 6px 22px rgba(5,150,105,.5);}
+.btn-download:disabled{opacity:.45;cursor:not-allowed;transform:none;}
 
-    /* ─── Error Alert ─── */
-    .alert-error {
-      background: var(--red-pale);
-      border: 1px solid #FECACA;
-      border-radius: var(--radius-md);
-      padding: 12px 16px;
-      font-size: 13px;
-      color: #991B1B;
-      margin-bottom: 16px;
-      display: flex;
-      gap: 10px;
-      align-items: flex-start;
-    }
+/* ─── Alerts ──────────────────────────────────────────────────────────────── */
+#alert-area{position:fixed;top:74px;right:20px;z-index:200;width:340px;display:flex;flex-direction:column;gap:8px;}
+.alert{
+  background:var(--white);border-radius:var(--radius-sm);
+  border-left:4px solid var(--accent);
+  box-shadow:var(--shadow-lg);
+  padding:14px 16px;font-size:14px;
+  display:flex;align-items:flex-start;gap:10px;
+  animation:slideIn .25s ease;
+}
+@keyframes slideIn{from{opacity:0;transform:translateX(30px);}to{opacity:1;transform:translateX(0);}}
+.alert.error  {border-color:var(--danger);}
+.alert.success{border-color:var(--success);}
+.alert.warning{border-color:var(--warning);}
+.alert-icon{font-size:16px;flex-shrink:0;}
+.alert-close{margin-left:auto;cursor:pointer;opacity:.5;font-size:18px;background:none;border:none;padding:0 2px;transition:opacity .1s;}
+.alert-close:hover{opacity:1;}
 
-    /* ─── Validation Panel ─── */
-    .validation-block {
-      border: 1px solid var(--gray-200);
-      border-radius: var(--radius-md);
-      overflow: hidden;
-      margin-bottom: 10px;
-    }
-    .val-header {
-      padding: 10px 14px;
-      background: var(--gray-50);
-      border-bottom: 1px solid var(--gray-200);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 12px;
-    }
-    .val-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-    .val-dot.ok   { background: #10B981; }
-    .val-dot.warn { background: var(--amber); }
-    .val-dot.err  { background: var(--red); }
-    .val-filename { flex: 1; font-weight: 600; color: var(--gray-700); }
-    .val-bank { color: var(--gray-400); font-size: 11px; }
-    .val-badge {
-      font-size: 10px;
-      font-weight: 700;
-      padding: 3px 9px;
-      border-radius: 20px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-    .val-badge.ok   { background: var(--green-pale); color: var(--green); }
-    .val-badge.warn { background: var(--amber-pale); color: var(--amber); }
-    .val-badge.err  { background: var(--red-pale);   color: var(--red); }
-    .val-body {
-      padding: 10px 14px;
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-    }
-    .val-item {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 11px;
-      font-family: 'DM Mono', monospace;
-      color: var(--gray-600);
-    }
-    .val-chip {
-      font-size: 9px;
-      font-weight: 700;
-      padding: 2px 7px;
-      border-radius: 4px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      flex-shrink: 0;
-    }
-    .val-chip.ok   { background: var(--green-pale); color: var(--green); }
-    .val-chip.warn { background: var(--amber-pale); color: var(--amber); }
-    .val-chip.err  { background: var(--red-pale);   color: var(--red); }
+/* ─── Spinner ─────────────────────────────────────────────────────────────── */
+.spinner{
+  display:inline-block;width:18px;height:18px;
+  border:2.5px solid rgba(255,255,255,.4);
+  border-top-color:#fff;border-radius:50%;
+  animation:spin .7s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg);}}
 
-    /* ─── Summary Cards ─── */
-    .summary-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 12px;
-      margin-bottom: 20px;
-    }
-    @media (max-width: 640px) { .summary-grid { grid-template-columns: repeat(2, 1fr); } }
-    .stat-card {
-      background: #fff;
-      border: 1px solid var(--gray-200);
-      border-radius: var(--radius-md);
-      padding: 14px 16px;
-      box-shadow: var(--shadow-sm);
-    }
-    .stat-label {
-      font-size: 11px;
-      color: var(--gray-400);
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
-      margin-bottom: 6px;
-    }
-    .stat-value {
-      font-size: 22px;
-      font-weight: 700;
-      font-family: 'DM Mono', monospace;
-      letter-spacing: -0.5px;
-      color: var(--gray-900);
-    }
-    .stat-value.pos { color: var(--green); }
-    .stat-value.neg { color: var(--red); }
+/* ─── Responsive ──────────────────────────────────────────────────────────── */
+@media(max-width:640px){
+  .header-badge{display:none;}
+  .btn-download{font-size:14px;padding:12px 22px;}
+  .stats-grid{grid-template-columns:1fr 1fr;}
+}
 
-    /* ─── Preview Table ─── */
-    .table-wrap { overflow-x: auto; }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 12px;
-    }
-    th {
-      background: var(--gray-50);
-      color: var(--gray-400);
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      padding: 10px 14px;
-      text-align: left;
-      white-space: nowrap;
-      border-bottom: 1px solid var(--gray-200);
-      position: sticky;
-      top: 0;
-    }
-    td {
-      padding: 9px 14px;
-      border-bottom: 1px solid var(--gray-100);
-      color: var(--gray-700);
-      font-family: 'DM Mono', monospace;
-      white-space: nowrap;
-    }
-    td.desc {
-      font-family: 'DM Sans', sans-serif;
-      font-size: 12px;
-      max-width: 200px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    tr:last-child td { border-bottom: none; }
-    tr:hover td { background: var(--gray-50); }
-    .amt-pos { color: var(--green); }
-    .amt-neg { color: var(--red); }
+/* ─── Spacing helpers ─────────────────────────────────────────────────────── */
+.mt-6{margin-top:6px;} .mt-10{margin-top:10px;}
+.mt-16{margin-top:16px;}.mt-24{margin-top:24px;}
+.mb-4{margin-bottom:4px;}.mb-8{margin-bottom:8px;}
 
-    /* ─── Category Badges ─── */
-    .cat {
-      font-size: 10px;
-      font-weight: 700;
-      padding: 3px 9px;
-      border-radius: 20px;
-      font-family: 'DM Sans', sans-serif;
-      display: inline-block;
-      white-space: nowrap;
-    }
-    .cat-Salary      { background: var(--green-pale); color: var(--green); }
-    .cat-Rent        { background: var(--red-pale);   color: var(--red); }
-    .cat-Food        { background: var(--amber-pale);  color: var(--amber); }
-    .cat-Utilities   { background: var(--blue-pale);  color: var(--blue); }
-    .cat-Transfer    { background: #EDE9FE; color: #5B21B6; }
-    .cat-Miscellaneous { background: var(--gray-100); color: var(--gray-500); }
-
-    /* ─── Download Banner ─── */
-    .download-banner {
-      background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%);
-      border-radius: var(--radius-lg);
-      padding: 24px 28px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 20px;
-      box-shadow: var(--shadow-lg);
-      margin-bottom: 20px;
-    }
-    @media (max-width: 560px) { .download-banner { flex-direction: column; align-items: flex-start; } }
-    .dl-text h3 {
-      font-size: 17px;
-      font-weight: 700;
-      color: #fff;
-      margin-bottom: 5px;
-    }
-    .dl-text p {
-      font-size: 13px;
-      color: rgba(255,255,255,0.5);
-      font-family: 'DM Mono', monospace;
-    }
-    .btn-download {
-      font-family: 'DM Sans', sans-serif;
-      font-size: 14px;
-      font-weight: 700;
-      padding: 13px 26px;
-      background: #fff;
-      color: var(--navy);
-      border: none;
-      border-radius: var(--radius-md);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      white-space: nowrap;
-      flex-shrink: 0;
-      transition: transform 0.15s, box-shadow 0.15s;
-    }
-    .btn-download:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 20px rgba(0,0,0,0.25);
-    }
-
-    /* ─── Spinner ─── */
-    .spinner {
-      display: inline-block;
-      width: 14px; height: 14px;
-      border: 2px solid rgba(255,255,255,0.3);
-      border-top-color: #fff;
-      border-radius: 50%;
-      animation: spin 0.7s linear infinite;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* ─── Footer / Instructions ─── */
-    .setup-box {
-      background: var(--gray-50);
-      border: 1px solid var(--gray-200);
-      border-radius: var(--radius-lg);
-      padding: 20px 24px;
-      margin-top: 32px;
-    }
-    .setup-box h4 {
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--gray-700);
-      margin-bottom: 10px;
-    }
-    .setup-box ol {
-      padding-left: 18px;
-      font-size: 13px;
-      color: var(--gray-500);
-      line-height: 1.8;
-    }
-    .setup-box code {
-      font-family: 'DM Mono', monospace;
-      font-size: 12px;
-      background: var(--gray-200);
-      padding: 1px 6px;
-      border-radius: 4px;
-      color: var(--gray-700);
-    }
-    .setup-box a { color: var(--blue); }
-
-    hr.divider {
-      border: none;
-      border-top: 1px solid var(--gray-200);
-      margin: 24px 0;
-    }
-  </style>
+/* ─── Table row count ────────────────────────────────────────────────────── */
+.row-count{font-size:13px;color:var(--ink-light);margin-left:auto;}
+</style>
 </head>
-
 <body>
 
-  <!-- ─── Header ─── -->
-  <header class="site-header">
-    <div class="header-inner">
-      <div class="brand">
-        <div class="brand-icon">📊</div>
-        <div>
-          <div class="brand-name">Extract Your Bank Transactions</div>
-          <div class="brand-tagline">Finance-grade PDF → Excel converter · AI-powered</div>
-        </div>
-      </div>
-      <span class="header-pill">MULTI-BANK · VALIDATED</span>
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     HEADER
+════════════════════════════════════════════════════════════════════════════ -->
+<header class="app-header">
+  <div class="header-inner">
+    <span class="header-icon">🏦</span>
+    <div>
+      <div class="header-title">Bank Transaction Extractor</div>
+      <div class="header-sub">PDF → Structured Excel in seconds</div>
     </div>
-  </header>
+    <span class="header-badge">v2.0 · Local · No API</span>
+  </div>
+</header>
 
-  <div class="app-wrapper">
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     ALERTS (toast area)
+════════════════════════════════════════════════════════════════════════════ -->
+<div id="alert-area"></div>
 
-    <!-- ─── API Key Setup ─── -->
-    <div class="api-key-banner" id="apiKeyBanner">
-      <span class="api-key-icon">🔑</span>
-      <div>
-        <div class="api-key-label">Anthropic API Key Required</div>
-        <div class="api-key-sub">Enter your key to enable AI parsing. Get one at <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a></div>
-      </div>
-      <div class="api-key-input-wrap">
-        <input class="api-key-input" type="password" id="apiKeyInput" placeholder="sk-ant-..." />
-        <button class="btn-save-key" onclick="saveApiKey()">Save Key</button>
-        <span class="key-status unset" id="keyStatus">Not set</span>
-      </div>
-    </div>
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     MAIN CONTENT
+════════════════════════════════════════════════════════════════════════════ -->
+<div class="app-wrap">
 
-    <!-- ─── Upload Section ─── -->
-    <div class="section-label">Upload Bank Statements</div>
-
+  <!-- ── Upload Card ─────────────────────────────────────────────────────── -->
+  <div class="mt-24">
+    <div class="section-title">Step 1 — Upload PDF Statements</div>
     <div class="card">
-      <div class="card-body">
+      <div id="drop-zone">
+        <input type="file" id="file-input" accept=".pdf" multiple />
+        <span class="dz-icon">📄</span>
+        <div class="dz-headline">Drop your bank PDFs here</div>
+        <div class="dz-sub">or click to browse · up to 12 files</div>
+        <button class="btn-upload" onclick="document.getElementById('file-input').click();event.stopPropagation();">
+          ⬆ Upload PDF(s)
+        </button>
+      </div>
 
-        <div class="upload-zone" id="uploadZone">
-          <input type="file" id="fileInput" accept=".pdf" multiple />
-          <div class="upload-icon-wrap">📄</div>
-          <div class="upload-title">Drag & drop PDF files here</div>
-          <div class="upload-sub">
-            Supports all major banks — HSBC, Barclays, Chase, Wells Fargo, Bank of America,<br />
-            Standard Chartered, Citi, and more.
-          </div>
-          <span class="upload-tag">1 – 12 PDFs accepted · PDF files only</span>
-        </div>
+      <!-- Selected file chips -->
+      <div id="file-list"></div>
 
-        <div class="file-list" id="fileList"></div>
-
-        <div class="action-bar">
-          <button class="btn btn-primary" id="processBtn" disabled onclick="startProcessing()">
-            <span id="processBtnInner">⚡ Extract Transactions</span>
-          </button>
-          <button class="btn btn-ghost" id="clearBtn" style="display:none" onclick="clearAll()">
-            🗑 Clear All
-          </button>
-          <span class="status-text" id="statusText">No files loaded</span>
-        </div>
-
+      <!-- Action row -->
+      <div class="action-row">
+        <button class="btn-process" id="btn-process" disabled>
+          <span id="process-btn-content">⚙ Extract Transactions</span>
+        </button>
+        <button class="btn-clear" id="btn-clear" onclick="clearAll()">✕ Clear All</button>
       </div>
     </div>
+  </div>
 
-    <!-- ─── Progress ─── -->
-    <div class="progress-section" id="progressSection">
-      <div class="progress-bar">
-        <div class="progress-fill" id="progressFill"></div>
+  <!-- ── Progress Card ───────────────────────────────────────────────────── -->
+  <div class="mt-16" id="progress-section">
+    <div class="section-title">Processing</div>
+    <div class="card">
+      <div class="progress-label" id="progress-text">Initialising…</div>
+      <div class="progress-bar-wrap mt-6">
+        <div class="progress-bar-fill" id="progress-bar"></div>
       </div>
-      <div class="progress-label" id="progressLabel">Initializing...</div>
     </div>
+  </div>
 
-    <!-- ─── Log Console ─── -->
-    <div class="log-console" id="logConsole"></div>
-
-    <!-- ─── Error / Validation / Results ─── -->
-    <div id="errorArea"></div>
-    <div id="validationSection"></div>
-    <div id="summarySection"></div>
-    <div id="previewSection"></div>
-    <div id="downloadSection"></div>
-
-    <!-- ─── Setup Instructions ─── -->
-    <div class="setup-box" id="setupBox">
-      <h4>🚀 How to embed this on your website</h4>
-      <ol>
-        <li>Get a free Anthropic API key at <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a></li>
-        <li>Option A — Enter the key in the field above each session (key is stored in browser memory only)</li>
-        <li>Option B — Open this HTML file, find <code>HARDCODED_API_KEY</code> on line ~670 and replace with your key</li>
-        <li>Upload this file to your server, or use <code>&lt;iframe src="bank-extractor.html" width="100%" height="900"&gt;&lt;/iframe&gt;</code> to embed it anywhere</li>
-        <li>⚠️ For production: proxy API calls through your backend to protect your key</li>
-      </ol>
+  <!-- ── Stats Bar ───────────────────────────────────────────────────────── -->
+  <div class="mt-16" id="stats-bar">
+    <div class="section-title">Step 2 — Summary & Validation</div>
+    <div class="stats-grid">
+      <div class="stat-box"><div class="stat-label">Transactions</div><div class="stat-value" id="stat-count">0</div></div>
+      <div class="stat-box"><div class="stat-label">Total Credits</div><div class="stat-value credit" id="stat-credits">0.00</div></div>
+      <div class="stat-box"><div class="stat-label">Total Debits</div><div class="stat-value debit" id="stat-debits">0.00</div></div>
+      <div class="stat-box"><div class="stat-label">Net Balance</div><div class="stat-value" id="stat-net">0.00</div></div>
     </div>
+    <div id="validation-banner"></div>
+  </div>
 
-  </div><!-- /app-wrapper -->
+  <!-- ── Table ───────────────────────────────────────────────────────────── -->
+  <div class="mt-24" id="table-section">
+    <div class="section-title">
+      Step 3 — Extracted Transactions
+      <span class="row-count" id="row-count-label"></span>
+    </div>
+    <div class="card" style="padding:16px;">
+      <div class="table-toolbar">
+        <input class="search-box" id="search-input" type="text" placeholder="🔍  Search description, amount, date…" oninput="filterTable()" />
+        <select class="filter-select" id="type-filter" onchange="filterTable()">
+          <option value="">All Types</option>
+          <option value="credit">Credits only</option>
+          <option value="debit">Debits only</option>
+        </select>
+        <select class="filter-select" id="cat-filter" onchange="filterTable()">
+          <option value="">All Categories</option>
+          <option value="Salary">Salary</option>
+          <option value="Rent">Rent</option>
+          <option value="Utilities">Utilities</option>
+          <option value="Deposit">Deposit</option>
+          <option value="Transfer">Transfer</option>
+          <option value="Food">Food</option>
+          <option value="Miscellaneous">Miscellaneous</option>
+        </select>
+      </div>
+      <div class="table-wrap">
+        <table id="txn-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Date</th>
+              <th>Description</th>
+              <th>Type</th>
+              <th>Amount</th>
+              <th>Category</th>
+            </tr>
+          </thead>
+          <tbody id="txn-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
 
+  <!-- ── Download ─────────────────────────────────────────────────────────── -->
+  <div class="mt-24" id="download-section">
+    <div class="section-title">Step 4 — Export</div>
+    <div class="card" style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+      <div>
+        <div style="font-weight:600;margin-bottom:4px;">Your transactions are ready!</div>
+        <div style="font-size:13px;color:var(--ink-light);">Download as a formatted Excel file for accounting / analysis.</div>
+      </div>
+      <button class="btn-download" id="btn-download" onclick="downloadExcel()">
+        📥 Download Excel (.xlsx)
+      </button>
+    </div>
+  </div>
 
-  <!-- ─── JavaScript Engine ─── -->
-  <script>
-    // ════════════════════════════════════════════════════════════════
-    //  CONFIGURATION
-    //  Replace 'HARDCODED_API_KEY' with your key to skip the UI prompt
-    // ════════════════════════════════════════════════════════════════
-    const HARDCODED_API_KEY = ''; // e.g. 'sk-ant-api03-...'
+</div><!-- /app-wrap -->
 
-    const API_URL = 'https://api.anthropic.com/v1/messages';
-    const MODEL   = 'claude-sonnet-4-20250514';
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     JAVASCRIPT
+════════════════════════════════════════════════════════════════════════════ -->
+<script>
+/* ─────────────────────────────────────────────────────────────────────────
+   GLOBAL STATE
+────────────────────────────────────────────────────────────────────────── */
+let selectedFiles  = [];     // File objects chosen by the user
+let allTransactions = [];    // Parsed transaction rows
+let balanceInfo    = {};     // Opening / closing balance per file
+const MAX_FILES    = 12;
 
-    // ─── PDF.js worker ───
-    pdfjsLib.GlobalWorkerOptions.workerSrc =
-      'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+/* Configure PDF.js worker */
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-    // ─── State ───
-    let uploadedFiles  = [];
-    let allTransactions = [];
-    let sessionApiKey  = HARDCODED_API_KEY;
+/* ─────────────────────────────────────────────────────────────────────────
+   KEYWORD CLASSIFICATION MAP
+   Inspired by Profit & Loss statement categories.
+   Each entry: { keywords, label, badgeClass }
+────────────────────────────────────────────────────────────────────────── */
+const CATEGORIES = [
+  { label:'Salary',     badgeClass:'badge-salary',    kw:['salary','payroll','wages','pay','income','stipend','remuneration','compensation'] },
+  { label:'Rent',       badgeClass:'badge-rent',      kw:['rent','lease','landlord','housing','accommodation','apartment','flat'] },
+  { label:'Utilities',  badgeClass:'badge-utilities',  kw:['electric','electricity','water','gas','internet','broadband','utility','utilities','telecom','telephone','mobile','wifi','cable'] },
+  { label:'Deposit',    badgeClass:'badge-deposit',   kw:['deposit','saving','fixed deposit','fd','rd','recurring','opening balance'] },
+  { label:'Transfer',   badgeClass:'badge-transfer',  kw:['transfer','neft','rtgs','imps','upi','wire','remittance','trf','int\'l','international','sent','received'] },
+  { label:'Food',       badgeClass:'badge-food',       kw:['food','restaurant','cafe','coffee','dining','grocery','supermarket','swiggy','zomato','uber eat','grub','hotel','canteen','bakery'] },
+  { label:'Miscellaneous', badgeClass:'badge-misc',   kw:[] },
+];
 
-    // ─── DOM refs ───
-    const uploadZone      = document.getElementById('uploadZone');
-    const fileInput       = document.getElementById('fileInput');
-    const fileListEl      = document.getElementById('fileList');
-    const processBtn      = document.getElementById('processBtn');
-    const processBtnInner = document.getElementById('processBtnInner');
-    const clearBtn        = document.getElementById('clearBtn');
-    const statusText      = document.getElementById('statusText');
-    const progressSection = document.getElementById('progressSection');
-    const progressFill    = document.getElementById('progressFill');
-    const progressLabel   = document.getElementById('progressLabel');
-    const logConsole      = document.getElementById('logConsole');
-    const errorArea       = document.getElementById('errorArea');
-    const validationSection = document.getElementById('validationSection');
-    const summarySection  = document.getElementById('summarySection');
-    const previewSection  = document.getElementById('previewSection');
-    const downloadSection = document.getElementById('downloadSection');
-    const apiKeyInput     = document.getElementById('apiKeyInput');
-    const keyStatus       = document.getElementById('keyStatus');
-
-    // Init key status
-    if (HARDCODED_API_KEY) {
-      keyStatus.textContent = 'Active';
-      keyStatus.className = 'key-status set';
-    }
-
-    // ─── API key management ───
-    function saveApiKey() {
-      const k = apiKeyInput.value.trim();
-      if (!k.startsWith('sk-')) { alert('Key should start with sk-'); return; }
-      sessionApiKey = k;
-      keyStatus.textContent = 'Active';
-      keyStatus.className = 'key-status set';
-      apiKeyInput.value = '';
-      log('API key saved for this session', 'ok');
-    }
-
-    function getApiKey() {
-      return sessionApiKey || apiKeyInput.value.trim();
-    }
-
-    // ─── Drag & drop ───
-    uploadZone.addEventListener('dragover', e => {
-      e.preventDefault();
-      uploadZone.classList.add('drag-over');
-    });
-    uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
-    uploadZone.addEventListener('drop', e => {
-      e.preventDefault();
-      uploadZone.classList.remove('drag-over');
-      const files = Array.from(e.dataTransfer.files).filter(f => f.type === 'application/pdf');
-      if (!files.length) { showError('Only PDF files are accepted.'); return; }
-      addFiles(files);
-    });
-    fileInput.addEventListener('change', e => {
-      addFiles(Array.from(e.target.files));
-      fileInput.value = '';
-    });
-
-    function addFiles(files) {
-      for (const f of files) {
-        if (uploadedFiles.length >= 12) {
-          showError('Maximum 12 PDFs allowed at once.');
-          break;
-        }
-        const isDupe = uploadedFiles.find(u => u.name === f.name && u.size === f.size);
-        if (!isDupe) uploadedFiles.push(f);
-      }
-      renderFileList();
-      updateActions();
-    }
-
-    function renderFileList() {
-      fileListEl.innerHTML = '';
-      uploadedFiles.forEach((f, i) => {
-        const div = document.createElement('div');
-        div.className = 'file-item';
-        div.innerHTML = `
-          <div class="file-pdf-icon">📄</div>
-          <div class="file-meta">
-            <div class="file-name" title="${f.name}">${f.name}</div>
-            <div class="file-size">${(f.size / 1024).toFixed(1)} KB</div>
-          </div>
-          <span class="file-dot ready"></span>
-          <button class="file-remove-btn" onclick="removeFile(${i})" title="Remove">×</button>
-        `;
-        fileListEl.appendChild(div);
-      });
-    }
-
-    function removeFile(i) {
-      uploadedFiles.splice(i, 1);
-      renderFileList();
-      updateActions();
-    }
-
-    function updateActions() {
-      const n = uploadedFiles.length;
-      processBtn.disabled = n === 0;
-      clearBtn.style.display = n > 0 ? '' : 'none';
-      statusText.textContent = n === 0
-        ? 'No files loaded'
-        : `${n} PDF${n > 1 ? 's' : ''} ready to process`;
-    }
-
-    function clearAll() {
-      uploadedFiles = [];
-      allTransactions = [];
-      renderFileList();
-      updateActions();
-      [validationSection, summarySection, previewSection, downloadSection, errorArea].forEach(el => el.innerHTML = '');
-      progressSection.style.display = 'none';
-      logConsole.style.display = 'none';
-      logConsole.innerHTML = '';
-    }
-
-    // ─── Logging ───
-    function log(msg, type = 'info') {
-      logConsole.style.display = 'flex';
-      const line = document.createElement('div');
-      line.className = 'log-line';
-      const now = new Date().toLocaleTimeString('en-GB', { hour12: false });
-      line.innerHTML = `<span class="log-time">${now}</span><span class="log-msg-${type}">${msg}</span>`;
-      logConsole.appendChild(line);
-      logConsole.scrollTop = logConsole.scrollHeight;
-    }
-
-    function setProgress(pct, label) {
-      progressSection.style.display = '';
-      progressFill.style.width = pct + '%';
-      progressLabel.textContent = label;
-    }
-
-    function showError(msg) {
-      errorArea.innerHTML = `<div class="alert-error"><span>⚠️</span><span>${msg}</span></div>`;
-    }
-
-    // ════════════════════════════════════════════════════════════════
-    //  PDF TEXT EXTRACTION
-    //  Uses PDF.js to pull raw text from every page
-    // ════════════════════════════════════════════════════════════════
-    async function extractTextFromPDF(file) {
-      const buffer = await file.arrayBuffer();
-      const pdf    = await pdfjsLib.getDocument({ data: buffer }).promise;
-      let text = '';
-      for (let p = 1; p <= pdf.numPages; p++) {
-        const page    = await pdf.getPage(p);
-        const content = await page.getTextContent();
-        // Preserve newlines using hasEOL flag
-        const pageText = content.items.map(item => item.str + (item.hasEOL ? '\n' : ' ')).join('');
-        text += `\n=== PAGE ${p} ===\n${pageText}`;
-      }
-      return text;
-    }
-
-    // ════════════════════════════════════════════════════════════════
-    //  AI PARSING ENGINE
-    //  System prompt engineered for maximum extraction accuracy
-    // ════════════════════════════════════════════════════════════════
-    const SYSTEM_PROMPT = `You are a precision bank transaction extraction engine used by accountants and finance professionals. Your output feeds directly into P&L statements and accounting software.
-
-CRITICAL RULES:
-1. Extract EVERY transaction — zero omissions allowed.
-2. Return ONLY valid JSON — no markdown fences, no prose, no comments.
-3. Never hallucinate or invent transactions not present in the text.
-4. If a field is not found in the source, use null — never guess.
-
-FIELD RULES:
-- date: Always YYYY-MM-DD. If only month/day visible, infer year from statement context.
-- description: Clean and readable. Remove extra whitespace, reference codes ok to include.
-- amount: NUMBER ONLY (no symbols). Credits/deposits = POSITIVE. Debits/withdrawals = NEGATIVE.
-- balance: Running balance if shown, else null.
-- category: Classify using these EXACT keywords (case-insensitive matching):
-    "Salary"       → SALARY, PAYROLL, WAGES, PAY, BACS CREDIT, DIRECT DEPOSIT, EMPLOYER
-    "Rent"         → RENT, LANDLORD, PROPERTY, LEASE, HOUSING
-    "Utilities"    → ELECTRIC, GAS, WATER, INTERNET, BROADBAND, PHONE, MOBILE, BT, EE, VODAFONE, O2, UTILITY
-    "Food"         → RESTAURANT, CAFE, COFFEE, BAKERY, GROCERY, SUPERMARKET, TESCO, SAINSBURY, WAITROSE,
-                     MARKS, ASDA, ALDI, LIDL, MORRISONS, FOOD, UBER EATS, DELIVEROO, JUST EAT, MCDONALD,
-                     KFC, BURGER KING, STARBUCKS, COSTA, PRET, NANDO
-    "Transfer"     → TRANSFER, WIRE, ACH, ZELLE, VENMO, PAYPAL, STANDING ORDER, FASTER PAYMENT,
-                     FPS, CHAPS, SENT, RECEIVED, BACS
-    "Miscellaneous" → everything else
-
-OUTPUT FORMAT (strict):
-{
-  "bank_name": "string or Unknown",
-  "statement_period": "string or Unknown",
-  "currency": "ISO code e.g. USD GBP EUR or Unknown",
-  "transactions": [
-    {
-      "date": "YYYY-MM-DD",
-      "description": "cleaned string",
-      "amount": 0.00,
-      "balance": 0.00,
-      "category": "Salary|Rent|Utilities|Food|Transfer|Miscellaneous"
-    }
-  ],
-  "validation": {
-    "opening_balance": null,
-    "closing_balance": null,
-    "total_credits": null,
-    "total_debits": null,
-    "transaction_count": null
+function classify(desc) {
+  const d = (desc || '').toLowerCase();
+  for (const cat of CATEGORIES) {
+    if (cat.label === 'Miscellaneous') continue;
+    if (cat.kw.some(k => d.includes(k))) return cat;
   }
-}`;
+  return CATEGORIES.find(c => c.label === 'Miscellaneous');
+}
 
-    async function parseWithAI(pdfText, fileName) {
-      const key = getApiKey();
-      if (!key) throw new Error('No API key set. Enter your Anthropic API key above.');
+/* ─────────────────────────────────────────────────────────────────────────
+   FILE INPUT HANDLING
+────────────────────────────────────────────────────────────────────────── */
+const fileInput = document.getElementById('file-input');
+const dropZone  = document.getElementById('drop-zone');
 
-      const res = await fetch(API_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': key,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true'
-        },
-        body: JSON.stringify({
-          model: MODEL,
-          max_tokens: 1000,
-          system: SYSTEM_PROMPT,
-          messages: [{
-            role: 'user',
-            content: `Extract all transactions from this bank statement.\nFile: ${fileName}\n\n${pdfText.slice(0, 28000)}`
-          }]
-        })
-      });
+fileInput.addEventListener('change', e => addFiles([...e.target.files]));
 
-      if (!res.ok) {
-        const err = await res.text();
-        throw new Error(`API ${res.status}: ${err}`);
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', ()=> dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault(); dropZone.classList.remove('drag-over');
+  addFiles([...e.dataTransfer.files].filter(f => f.type === 'application/pdf'));
+});
+
+function addFiles(files) {
+  for (const f of files) {
+    if (f.type !== 'application/pdf') { showAlert('Only PDF files are supported.','error'); continue; }
+    if (selectedFiles.length >= MAX_FILES) { showAlert(`Maximum ${MAX_FILES} files allowed.`,'warning'); break; }
+    if (!selectedFiles.find(s => s.name === f.name)) selectedFiles.push(f);
+  }
+  renderFileChips();
+  document.getElementById('btn-process').disabled = selectedFiles.length === 0;
+}
+
+function removeFile(name) {
+  selectedFiles = selectedFiles.filter(f => f.name !== name);
+  renderFileChips();
+  document.getElementById('btn-process').disabled = selectedFiles.length === 0;
+}
+
+function renderFileChips() {
+  const el = document.getElementById('file-list');
+  el.innerHTML = selectedFiles.map(f => `
+    <span class="file-chip">
+      📄 ${f.name}
+      <button class="chip-remove" onclick="removeFile('${f.name.replace(/'/g,"\\'")}')">×</button>
+    </span>`).join('');
+}
+
+function clearAll() {
+  selectedFiles = []; allTransactions = []; balanceInfo = {};
+  renderFileChips();
+  fileInput.value = '';
+  document.getElementById('btn-process').disabled = true;
+  hide('progress-section'); hide('stats-bar'); hide('table-section'); hide('download-section');
+  document.getElementById('txn-body').innerHTML = '';
+  document.getElementById('validation-banner').innerHTML = '';
+  document.getElementById('validation-banner').style.display = 'none';
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   PROGRESS HELPERS
+────────────────────────────────────────────────────────────────────────── */
+function setProgress(pct, label) {
+  document.getElementById('progress-bar').style.width = pct + '%';
+  document.getElementById('progress-text').textContent = label;
+}
+function show(id){ document.getElementById(id).style.display = ''; }
+function hide(id){ document.getElementById(id).style.display = 'none'; }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   MAIN EXTRACTION PIPELINE
+────────────────────────────────────────────────────────────────────────── */
+document.getElementById('btn-process').addEventListener('click', async () => {
+  if (!selectedFiles.length) return;
+
+  allTransactions = [];
+  balanceInfo = {};
+
+  // UI: disable button, show spinner
+  const btnContent = document.getElementById('process-btn-content');
+  btnContent.innerHTML = '<span class="spinner"></span> Processing…';
+  document.getElementById('btn-process').disabled = true;
+  show('progress-section');
+  hide('stats-bar'); hide('table-section'); hide('download-section');
+
+  const total = selectedFiles.length;
+
+  for (let i = 0; i < total; i++) {
+    const f = selectedFiles[i];
+    setProgress(Math.round((i / total) * 80), `Extracting: ${f.name} (${i+1}/${total})…`);
+
+    try {
+      const rawText = await extractTextFromPDF(f);
+      const { transactions, opening, closing } = parseTransactions(rawText, f.name);
+      allTransactions.push(...transactions);
+      if (opening !== null || closing !== null) {
+        balanceInfo[f.name] = { opening, closing };
       }
-
-      const data = await res.json();
-      const raw  = data.content.map(b => b.text || '').join('');
-      const json = raw.replace(/```json|```/g, '').trim();
-      return JSON.parse(json);
+    } catch(err) {
+      showAlert(`Failed to process "${f.name}": ${err.message}`, 'error');
     }
+  }
 
-    // ════════════════════════════════════════════════════════════════
-    //  VALIDATION ENGINE
-    //  Checks extracted data against statement totals
-    // ════════════════════════════════════════════════════════════════
-    function validateExtraction(parsed, fileName) {
-      const issues = [];
-      const txs    = parsed.transactions || [];
-      const val    = parsed.validation   || {};
+  setProgress(95, 'Classifying & validating…');
+  await sleep(300);
 
-      if (txs.length === 0) {
-        issues.push({ lvl: 'err', msg: `No transactions could be extracted from ${fileName}` });
-        return { issues, txs };
-      }
-
-      const credits = txs.filter(t => t.amount > 0).reduce((s, t) => s + t.amount, 0);
-      const debits  = txs.filter(t => t.amount < 0).reduce((s, t) => s + t.amount, 0);
-
-      // Check count
-      if (val.transaction_count != null) {
-        if (txs.length !== +val.transaction_count) {
-          issues.push({ lvl: 'warn', msg: `Count mismatch — extracted ${txs.length}, statement shows ${val.transaction_count}` });
-        } else {
-          issues.push({ lvl: 'ok',   msg: `Transaction count verified: ${txs.length}` });
-        }
-      } else {
-        issues.push({ lvl: 'ok',   msg: `Extracted ${txs.length} transactions` });
-      }
-
-      // Check credits
-      if (val.total_credits != null) {
-        const diff = Math.abs(credits - +val.total_credits);
-        if (diff > 0.05) {
-          issues.push({ lvl: 'warn', msg: `Credits mismatch — computed ${credits.toFixed(2)} vs stated ${val.total_credits}` });
-        } else {
-          issues.push({ lvl: 'ok',   msg: `Credits reconciled: ${credits.toFixed(2)}` });
-        }
-      }
-
-      // Check debits
-      if (val.total_debits != null) {
-        const diff = Math.abs(Math.abs(debits) - Math.abs(+val.total_debits));
-        if (diff > 0.05) {
-          issues.push({ lvl: 'warn', msg: `Debits mismatch — computed ${Math.abs(debits).toFixed(2)} vs stated ${Math.abs(val.total_debits)}` });
-        } else {
-          issues.push({ lvl: 'ok',   msg: `Debits reconciled: ${Math.abs(debits).toFixed(2)}` });
-        }
-      }
-
-      // Check balance reconciliation
-      if (val.opening_balance != null && val.closing_balance != null) {
-        const expectedΔ = +val.closing_balance - +val.opening_balance;
-        const actualΔ   = credits + debits;
-        if (Math.abs(expectedΔ - actualΔ) > 0.05) {
-          issues.push({ lvl: 'warn', msg: `Balance drift — expected Δ${expectedΔ.toFixed(2)}, actual Δ${actualΔ.toFixed(2)}` });
-        } else {
-          issues.push({ lvl: 'ok',   msg: `Balance reconciled: ${val.opening_balance} → ${val.closing_balance}` });
-        }
-      }
-
-      // Check date format
-      const badDates = txs.filter(t => !/^\d{4}-\d{2}-\d{2}$/.test(t.date));
-      if (badDates.length) {
-        issues.push({ lvl: 'err', msg: `${badDates.length} transaction(s) have invalid dates — manual review needed` });
-      }
-
-      return { issues, txs };
-    }
-
-    // ════════════════════════════════════════════════════════════════
-    //  MAIN PROCESSING LOOP
-    // ════════════════════════════════════════════════════════════════
-    async function startProcessing() {
-      if (!uploadedFiles.length) return;
-
-      // Reset output areas
-      [errorArea, validationSection, summarySection, previewSection, downloadSection].forEach(el => el.innerHTML = '');
-      logConsole.innerHTML = '';
-      allTransactions = [];
-
-      const valResults = [];
-
-      processBtn.disabled = true;
-      processBtnInner.innerHTML = '<span class="spinner"></span> Processing...';
-      setProgress(0, 'Starting...');
-
-      try {
-        for (let i = 0; i < uploadedFiles.length; i++) {
-          const file = uploadedFiles[i];
-          const pct  = Math.round((i / uploadedFiles.length) * 85);
-
-          // Step 1 — Extract PDF text
-          setProgress(pct, `Reading PDF: ${file.name}`);
-          log(`Reading PDF: ${file.name}`);
-          let pdfText;
-          try {
-            pdfText = await extractTextFromPDF(file);
-            log(`Extracted ${pdfText.length.toLocaleString()} chars from ${file.name}`, 'ok');
-          } catch (e) {
-            log(`PDF error on ${file.name}: ${e.message}`, 'err');
-            showError(`Could not read ${file.name}: ${e.message}`);
-            continue;
-          }
-
-          // Step 2 — AI parse
-          setProgress(pct + 8, `AI parsing transactions from ${file.name}...`);
-          log(`Sending ${file.name} to AI parser...`);
-          let parsed;
-          try {
-            parsed = await parseWithAI(pdfText, file.name);
-            log(`AI found ${parsed.transactions?.length || 0} transactions in ${file.name}`, 'ok');
-          } catch (e) {
-            log(`Parse failed on ${file.name}: ${e.message}`, 'err');
-            showError(`Parsing failed for ${file.name}: ${e.message}`);
-            continue;
-          }
-
-          // Step 3 — Validate
-          const { issues, txs } = validateExtraction(parsed, file.name);
-          valResults.push({
-            fileName: file.name,
-            bank:     parsed.bank_name,
-            period:   parsed.statement_period,
-            issues
-          });
-
-          txs.forEach(tx => allTransactions.push({ ...tx, _source: file.name }));
-        }
-
-        setProgress(95, 'Rendering results...');
-        log(`Total transactions extracted: ${allTransactions.length}`, 'ok');
-
-        renderValidation(valResults);
-        renderSummary();
-        renderPreview();
-        renderDownload();
-
-        setProgress(100, `Done — ${allTransactions.length} transactions ready`);
-        setTimeout(() => { progressSection.style.display = 'none'; }, 3000);
-
-      } catch (e) {
-        log(`Fatal error: ${e.message}`, 'err');
-        showError(`Processing failed: ${e.message}`);
-      } finally {
-        processBtn.disabled = false;
-        processBtnInner.innerHTML = '⚡ Extract Transactions';
-        updateActions();
-      }
-    }
-
-    // ════════════════════════════════════════════════════════════════
-    //  RENDER FUNCTIONS
-    // ════════════════════════════════════════════════════════════════
-    function renderValidation(results) {
-      if (!results.length) return;
-      let html = `<div class="section-label" style="margin-top:8px">Validation Report</div>`;
-      for (const r of results) {
-        const hasErr  = r.issues.some(i => i.lvl === 'err');
-        const hasWarn = r.issues.some(i => i.lvl === 'warn');
-        const lvl     = hasErr ? 'err' : hasWarn ? 'warn' : 'ok';
-        const label   = hasErr ? '⚠ Issues Found' : hasWarn ? '⚑ Warnings' : '✓ All Clear';
-        const items   = r.issues.map(i =>
-          `<div class="val-item"><span class="val-chip ${i.lvl}">${i.lvl}</span>${i.msg}</div>`
-        ).join('');
-        html += `<div class="validation-block">
-          <div class="val-header">
-            <span class="val-dot ${lvl}"></span>
-            <span class="val-filename">${r.fileName}</span>
-            ${r.bank && r.bank !== 'Unknown' ? `<span class="val-bank">· ${r.bank}</span>` : ''}
-            ${r.period && r.period !== 'Unknown' ? `<span class="val-bank">${r.period}</span>` : ''}
-            <span class="val-badge ${lvl}">${label}</span>
-          </div>
-          <div class="val-body">${items}</div>
-        </div>`;
-      }
-      validationSection.innerHTML = html;
-    }
-
-    function renderSummary() {
-      if (!allTransactions.length) return;
-      const credits = allTransactions.filter(t => t.amount > 0).reduce((s, t) => s + t.amount, 0);
-      const debits  = allTransactions.filter(t => t.amount < 0).reduce((s, t) => s + t.amount, 0);
-      const net     = credits + debits;
-
-      summarySection.innerHTML = `
-        <div class="section-label" style="margin-top:8px">Summary</div>
-        <div class="summary-grid">
-          <div class="stat-card">
-            <div class="stat-label">Transactions</div>
-            <div class="stat-value">${allTransactions.length}</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-label">Total Credits</div>
-            <div class="stat-value pos">+${credits.toFixed(2)}</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-label">Total Debits</div>
-            <div class="stat-value neg">${debits.toFixed(2)}</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-label">Net Flow</div>
-            <div class="stat-value ${net >= 0 ? 'pos' : 'neg'}">${net >= 0 ? '+' : ''}${net.toFixed(2)}</div>
-          </div>
-        </div>`;
-    }
-
-    function renderPreview() {
-      if (!allTransactions.length) return;
-      const sorted  = [...allTransactions].sort((a, b) => a.date.localeCompare(b.date));
-      const preview = sorted.slice(0, 100);
-
-      const rows = preview.map(t => {
-        const cat = t.category || 'Miscellaneous';
-        return `<tr>
-          <td>${t.date}</td>
-          <td class="desc" title="${t.description}">${t.description}</td>
-          <td class="${t.amount >= 0 ? 'amt-pos' : 'amt-neg'}">${t.amount >= 0 ? '+' : ''}${(+t.amount).toFixed(2)}</td>
-          <td>${t.balance != null ? (+t.balance).toFixed(2) : '—'}</td>
-          <td><span class="cat cat-${cat}">${cat}</span></td>
-        </tr>`;
-      }).join('');
-
-      previewSection.innerHTML = `
-        <div class="section-label" style="margin-top:8px">Transaction Preview</div>
-        <div class="card">
-          <div class="card-header">
-            <span class="card-title">All Transactions</span>
-            <span style="font-size:11px;font-family:'DM Mono',monospace;color:var(--gray-400)">
-              ${allTransactions.length > 100 ? `showing 100 of ${allTransactions.length}` : `${allTransactions.length} rows`}
-            </span>
-          </div>
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Description</th>
-                  <th>Amount</th>
-                  <th>Balance</th>
-                  <th>Category</th>
-                </tr>
-              </thead>
-              <tbody>${rows}</tbody>
-            </table>
-          </div>
-        </div>`;
-    }
-
-    function renderDownload() {
-      if (!allTransactions.length) return;
-      downloadSection.innerHTML = `
-        <div class="download-banner">
-          <div class="dl-text">
-            <h3>Your file is ready to download</h3>
-            <p>${allTransactions.length} transactions · Excel format (.xlsx) · 2 sheets</p>
-          </div>
-          <button class="btn-download" onclick="downloadExcel()">
-            ⬇ Download Your Final File
-          </button>
-        </div>`;
-    }
-
-    // ════════════════════════════════════════════════════════════════
-    //  EXCEL EXPORT ENGINE
-    //  Generates professional .xlsx with 2 sheets
-    // ════════════════════════════════════════════════════════════════
-    function downloadExcel() {
-      const sorted = [...allTransactions].sort((a, b) => a.date.localeCompare(b.date));
-      const wb     = XLSX.utils.book_new();
-
-      // ── Sheet 1: Transactions ──
-      const txRows = [
-        ['Date', 'Description', 'Amount', 'Balance', 'Category / Notes', 'Source File'],
-        ...sorted.map(t => [
-          t.date,
-          t.description,
-          +t.amount,
-          t.balance != null ? +t.balance : '',
-          t.category || 'Miscellaneous',
-          t._source || ''
-        ])
-      ];
-
-      // Totals row
-      const credits = sorted.filter(t => t.amount > 0).reduce((s, t) => s + t.amount, 0);
-      const debits  = sorted.filter(t => t.amount < 0).reduce((s, t) => s + t.amount, 0);
-      txRows.push([]);
-      txRows.push(['TOTAL CREDITS', '', +credits.toFixed(2), '', '', '']);
-      txRows.push(['TOTAL DEBITS',  '', +debits.toFixed(2),  '', '', '']);
-      txRows.push(['NET FLOW',      '', +(credits + debits).toFixed(2), '', '', '']);
-
-      const ws1 = XLSX.utils.aoa_to_sheet(txRows);
-      ws1['!cols'] = [
-        { wch: 14 }, { wch: 50 }, { wch: 14 }, { wch: 14 }, { wch: 22 }, { wch: 35 }
-      ];
-      XLSX.utils.book_append_sheet(wb, ws1, 'Transactions');
-
-      // ── Sheet 2: Category Summary ──
-      const catMap = {};
-      for (const t of sorted) {
-        const c = t.category || 'Miscellaneous';
-        if (!catMap[c]) catMap[c] = { count: 0, total: 0 };
-        catMap[c].count++;
-        catMap[c].total += t.amount;
-      }
-
-      const catRows = [
-        ['Category', 'Transaction Count', 'Total Amount'],
-        ...Object.entries(catMap)
-          .sort((a, b) => Math.abs(b[1].total) - Math.abs(a[1].total))
-          .map(([cat, d]) => [cat, d.count, +d.total.toFixed(2)])
-      ];
-
-      const ws2 = XLSX.utils.aoa_to_sheet(catRows);
-      ws2['!cols'] = [{ wch: 22 }, { wch: 22 }, { wch: 18 }];
-      XLSX.utils.book_append_sheet(wb, ws2, 'Category Summary');
-
-      // ── Download ──
-      const date = new Date().toISOString().slice(0, 10);
-      XLSX.writeFile(wb, `bank_transactions_${date}.xlsx`);
-      log('Excel file downloaded successfully ✓', 'ok');
-    }
-
-  </script>
-
-  <!--
-  ════════════════════════════════════════════════════════════════════
-  BACKEND PROXY EXAMPLE (Node.js / Express)
-  Use this to hide your API key on the server side.
-  ════════════════════════════════════════════════════════════════════
-
-  // server.js
-  const express = require('express');
-  const fetch   = require('node-fetch');
-  const app     = express();
-  app.use(express.json({ limit: '10mb' }));
-
-  app.post('/api/parse', async (req, res) => {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': process.env.ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01'
-      },
-      body: JSON.stringify(req.body)
-    });
-    const data = await response.json();
-    res.json(data);
+  // Classify
+  allTransactions.forEach(tx => {
+    const cat = classify(tx.description);
+    tx.category  = cat.label;
+    tx.badgeClass = cat.badgeClass;
   });
 
-  app.listen(3000);
+  // Sort by date
+  allTransactions.sort((a,b) => (a.date||'').localeCompare(b.date||''));
 
-  // Then change API_URL in this file to:
-  // const API_URL = '/api/parse';
-  // And remove the x-api-key header from the fetch call in parseWithAI()
-  ════════════════════════════════════════════════════════════════════
-  -->
+  setProgress(100, 'Done!');
+  await sleep(300);
 
+  btnContent.innerHTML = '⚙ Extract Transactions';
+  document.getElementById('btn-process').disabled = false;
+
+  renderStats();
+  renderTable();
+  show('stats-bar');
+  show('table-section');
+  show('download-section');
+});
+
+function sleep(ms){ return new Promise(r => setTimeout(r,ms)); }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   PDF TEXT EXTRACTION (PDF.js)
+   Extracts raw text, preserving line breaks.
+────────────────────────────────────────────────────────────────────────── */
+async function extractTextFromPDF(file) {
+  const arrayBuffer = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  let fullText = '';
+
+  for (let p = 1; p <= pdf.numPages; p++) {
+    const page = await pdf.getPage(p);
+    const content = await page.getTextContent();
+
+    /* Group text items by their Y position to reconstruct lines */
+    const lineMap = {};
+    for (const item of content.items) {
+      if (!item.str) continue;
+      const y = Math.round(item.transform[5]);  // vertical position
+      const x = Math.round(item.transform[4]);  // horizontal position
+      if (!lineMap[y]) lineMap[y] = [];
+      lineMap[y].push({ x, str: item.str });
+    }
+
+    // Sort lines top-to-bottom (higher Y = higher on page)
+    const ys = Object.keys(lineMap).map(Number).sort((a,b) => b - a);
+    for (const y of ys) {
+      // Sort within a line left-to-right
+      const items = lineMap[y].sort((a,b) => a.x - b.x);
+      const line  = items.map(i => i.str).join(' ').trim();
+      if (line) fullText += line + '\n';
+    }
+    fullText += '\n---PAGE---\n';
+  }
+
+  return fullText;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   TRANSACTION PARSER
+   Strategy: multi-pass regex approach that handles various bank formats.
+   Pass 1: detect date-anchored rows (most common in statement tables).
+   Pass 2: detect balance lines for validation.
+────────────────────────────────────────────────────────────────────────── */
+function parseTransactions(text, filename) {
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  const transactions = [];
+  let opening = null, closing = null;
+
+  /* ── Date patterns ──────────────────────────────────────────────────── */
+  // Supports: DD/MM/YYYY, MM/DD/YYYY, DD-MM-YYYY, DD MMM YYYY, YYYY-MM-DD
+  const DATE_RX = [
+    /\b(\d{2})[\/\-](\d{2})[\/\-](\d{4})\b/,            // DD/MM/YYYY or MM/DD/YYYY
+    /\b(\d{4})[\/\-](\d{2})[\/\-](\d{2})\b/,            // YYYY-MM-DD
+    /\b(\d{1,2})\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+(\d{4})\b/i,
+    /\b(\d{2})(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)(\d{4})\b/i,
+  ];
+
+  /* ── Amount pattern ─────────────────────────────────────────────────── */
+  // Matches numbers like 1,234.56  or  1234.56  or  1,234,567.89
+  const AMT_RX = /[\d,]+\.\d{2}/g;
+
+  /* ── Balance detection ──────────────────────────────────────────────── */
+  const OPEN_RX  = /opening\s*balance|brought\s*forward|b\/f|ob\b/i;
+  const CLOSE_RX = /closing\s*balance|carried\s*forward|c\/f|cb\b/i;
+
+  /* ── Credit / Debit signal words ────────────────────────────────────── */
+  const CREDIT_RX = /\b(cr|credit|credited|dep|deposit|received|rec|inward|in)\b/i;
+  const DEBIT_RX  = /\b(dr|debit|debited|withdraw|wd|paid|payment|out|outward)\b/i;
+
+  /* ─── Helper: parse amount string → float ───────────────────────────── */
+  function toFloat(str){ return parseFloat(str.replace(/,/g,'')) || 0; }
+
+  /* ─── Helper: parse date to YYYY-MM-DD ──────────────────────────────── */
+  const MONTHS = {jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12};
+  function normaliseDate(raw) {
+    if (!raw) return '';
+    // YYYY-MM-DD
+    let m = raw.match(/^(\d{4})[\/\-](\d{2})[\/\-](\d{2})$/);
+    if (m) return `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;
+    // DD/MM/YYYY
+    m = raw.match(/^(\d{2})[\/\-](\d{2})[\/\-](\d{4})$/);
+    if (m) {
+      // Heuristic: if first part > 12 it must be day
+      const [,a,b,yr] = m;
+      return parseInt(a)>12
+        ? `${yr}-${b.padStart(2,'0')}-${a.padStart(2,'0')}`
+        : `${yr}-${a.padStart(2,'0')}-${b.padStart(2,'0')}`;
+    }
+    // DD MMM YYYY or DD MonYYYY
+    m = raw.match(/(\d{1,2})\s*(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s*(\d{4})/i);
+    if (m) {
+      const mo = MONTHS[m[2].slice(0,3).toLowerCase()];
+      return `${m[3]}-${String(mo).padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+    }
+    return raw;
+  }
+
+  /* ─── Line-by-line analysis ─────────────────────────────────────────── */
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+
+    /* ── Balance detection ─────────────────────────────────────────────── */
+    if (OPEN_RX.test(line)) {
+      const amts = line.match(AMT_RX);
+      if (amts) opening = toFloat(amts[amts.length - 1]);
+      continue;
+    }
+    if (CLOSE_RX.test(line)) {
+      const amts = line.match(AMT_RX);
+      if (amts) closing = toFloat(amts[amts.length - 1]);
+      continue;
+    }
+
+    /* ── Detect date in line (transaction row likely) ─────────────────── */
+    let dateRaw = null;
+    for (const rx of DATE_RX) {
+      const dm = line.match(rx);
+      if (dm) { dateRaw = dm[0]; break; }
+    }
+    if (!dateRaw) continue;
+
+    /* ── Extract all amounts from line ───────────────────────────────────
+       Most bank statements have:  Date | Desc | Debit | Credit | Balance
+       or:                         Date | Desc | Amount | Dr/Cr | Balance
+       Strategy: collect all amounts and heuristically assign debit/credit.
+    ─────────────────────────────────────────────────────────────────────── */
+    const amounts = (line.match(AMT_RX) || []).map(toFloat);
+    if (!amounts.length) continue;
+
+    /* Remove balance amount (usually the last, largest running total) */
+    // Use all but last as transaction amounts when 3+ amounts present
+    let txnAmounts = amounts.length >= 3 ? amounts.slice(0, -1) : amounts;
+
+    /* ── Determine description ────────────────────────────────────────── */
+    // Remove date and amounts from line to get description
+    let desc = line;
+    desc = desc.replace(dateRaw, '').trim();
+    for (const a of amounts) {
+      // Remove formatted and unformatted versions
+      desc = desc.replace(new RegExp(a.toLocaleString('en-IN',{minimumFractionDigits:2}).replace(/\./g,'\\.').replace(/,/g,'[,\\s]*'), 'g'), '');
+      desc = desc.replace(a.toFixed(2).replace(/\./g,'\\.'),'');
+    }
+    desc = desc.replace(/\s{2,}/g,' ').replace(/[|:]/g,' ').trim();
+    if (!desc || desc.length < 2) desc = 'Transaction';
+
+    /* ── Determine debit / credit ──────────────────────────────────────── */
+    let isCredit = null;
+
+    // Look for explicit Dr/Cr markers in line
+    if (CREDIT_RX.test(line)) isCredit = true;
+    if (DEBIT_RX.test(line))  isCredit = false;
+
+    // If two amounts in txnAmounts (debit col + credit col), one is 0
+    if (txnAmounts.length === 2) {
+      const [a, b] = txnAmounts;
+      if (a === 0 && b > 0) { isCredit = true;  txnAmounts = [b]; }
+      else if (b === 0 && a > 0) { isCredit = false; txnAmounts = [a]; }
+      else {
+        // Both non-zero: look for sign from context
+        if (isCredit === null) isCredit = CREDIT_RX.test(desc);
+      }
+    }
+
+    // Peek at next line for additional context
+    if (isCredit === null && i + 1 < lines.length) {
+      const next = lines[i + 1];
+      if (CREDIT_RX.test(next)) isCredit = true;
+      if (DEBIT_RX.test(next))  isCredit = false;
+    }
+
+    // Default heuristic: amounts over 10000 without markers → likely debit (common in statements)
+    if (isCredit === null) isCredit = false;
+
+    const amount = txnAmounts[0] || 0;
+    if (amount === 0) continue; // skip zero rows
+
+    transactions.push({
+      date:        normaliseDate(dateRaw),
+      description: desc,
+      type:        isCredit ? 'Credit' : 'Debit',
+      amount:      amount,
+      category:    '',
+      badgeClass:  '',
+      source:      filename,
+    });
+  }
+
+  /* ── Fallback: if no transactions found, try a relaxed multi-line approach ── */
+  if (transactions.length === 0) {
+    const fallback = relaxedParse(lines);
+    fallback.forEach(t => {
+      transactions.push({ ...t, source: filename });
+    });
+  }
+
+  return { transactions, opening, closing };
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   RELAXED PARSER
+   Handles formats where date and amount may be on adjacent lines.
+────────────────────────────────────────────────────────────────────────── */
+function relaxedParse(lines) {
+  const results = [];
+  const AMT_RX  = /[\d,]+\.\d{2}/g;
+  const DATE_RX = /\b(\d{2}[\/\-]\d{2}[\/\-]\d{4}|\d{4}[\/\-]\d{2}[\/\-]\d{2}|\d{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{4})\b/i;
+  const MONTHS = {jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12};
+
+  function normaliseDate(raw) {
+    if (!raw) return '';
+    let m = raw.match(/^(\d{4})[\/\-](\d{2})[\/\-](\d{2})$/);
+    if (m) return `${m[1]}-${m[2]}-${m[3]}`;
+    m = raw.match(/^(\d{2})[\/\-](\d{2})[\/\-](\d{4})$/);
+    if (m) return parseInt(m[1])>12 ? `${m[3]}-${m[2]}-${m[1]}` : `${m[3]}-${m[1]}-${m[2]}`;
+    m = raw.match(/(\d{1,2})\s*(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s*(\d{4})/i);
+    if (m) { const mo=MONTHS[m[2].slice(0,3).toLowerCase()]; return `${m[3]}-${String(mo).padStart(2,'0')}-${m[1].padStart(2,'0')}`; }
+    return raw;
+  }
+
+  for (let i = 0; i < lines.length; i++) {
+    const dm = lines[i].match(DATE_RX);
+    if (!dm) continue;
+    // Collect context: this line + next 2
+    const ctx = [lines[i], lines[i+1]||'', lines[i+2]||''].join(' ');
+    const amts = (ctx.match(AMT_RX)||[]).map(s => parseFloat(s.replace(/,/g,'')));
+    if (!amts.length) continue;
+    const amount = amts[0];
+    let desc = lines[i].replace(dm[0],'').replace(AMT_RX,'').replace(/\s{2,}/g,' ').trim() || 'Transaction';
+    const isCredit = /cr|credit|deposit|received/i.test(ctx);
+    results.push({ date:normaliseDate(dm[0]), description:desc, type:isCredit?'Credit':'Debit', amount, category:'', badgeClass:'' });
+    i++;
+  }
+  return results;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   RENDER STATS & VALIDATION
+────────────────────────────────────────────────────────────────────────── */
+function renderStats() {
+  const credits = allTransactions.filter(t => t.type==='Credit').reduce((s,t)=>s+t.amount, 0);
+  const debits  = allTransactions.filter(t => t.type==='Debit').reduce((s,t)=>s+t.amount, 0);
+  const net     = credits - debits;
+
+  document.getElementById('stat-count').textContent   = allTransactions.length;
+  document.getElementById('stat-credits').textContent = fmt(credits);
+  document.getElementById('stat-debits').textContent  = fmt(debits);
+  const netEl = document.getElementById('stat-net');
+  netEl.textContent = fmt(Math.abs(net));
+  netEl.className = 'stat-value ' + (net >= 0 ? 'credit' : 'debit');
+
+  // Validation
+  const banner = document.getElementById('validation-banner');
+  banner.style.display = '';
+
+  let balValidation = '';
+  for (const [fname, b] of Object.entries(balanceInfo)) {
+    if (b.opening !== null && b.closing !== null) {
+      const expected = parseFloat((b.opening + credits - debits).toFixed(2));
+      const actual   = parseFloat(b.closing.toFixed(2));
+      const diff     = Math.abs(expected - actual);
+      if (diff > 1) {
+        balValidation += `<div><strong>${fname}</strong>: Expected closing ${fmt(expected)} but found ${fmt(actual)} (diff ${fmt(diff)})</div>`;
+      }
+    }
+  }
+
+  if (!allTransactions.length) {
+    banner.innerHTML = `<div class="banner error"><span class="banner-icon">⚠️</span><div>No transactions could be extracted. The PDF may be image-based (scanned). Try a digitally-generated PDF or export a text-based PDF from your bank.</div></div>`;
+  } else if (balValidation) {
+    banner.innerHTML = `<div class="banner warning"><span class="banner-icon">⚠️</span><div><strong>Balance Mismatch Detected</strong><br>${balValidation}<br>Please verify your file before downloading.</div></div>`;
+  } else if (Object.keys(balanceInfo).length) {
+    banner.innerHTML = `<div class="banner success"><span class="banner-icon">✅</span><div>Balance validation passed — Opening + Credits − Debits matches Closing balance.</div></div>`;
+  } else {
+    banner.innerHTML = `<div class="banner warning"><span class="banner-icon">ℹ️</span><div>Opening/closing balances not detected in this statement — cross-check validation skipped.</div></div>`;
+  }
+}
+
+function fmt(n) {
+  return n.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   RENDER TABLE
+────────────────────────────────────────────────────────────────────────── */
+function renderTable(data) {
+  const rows = data || allTransactions;
+  const tbody = document.getElementById('txn-body');
+  document.getElementById('row-count-label').textContent = `${rows.length} rows`;
+
+  tbody.innerHTML = rows.map((t,i) => `
+    <tr>
+      <td style="color:var(--ink-light);font-size:12px;">${i+1}</td>
+      <td class="date-cell">${t.date || '—'}</td>
+      <td class="desc-cell" title="${escHtml(t.description)}">${escHtml(t.description)}</td>
+      <td>${t.type === 'Credit'
+        ? '<span class="badge badge-deposit">CR</span>'
+        : '<span class="badge badge-rent">DR</span>'}</td>
+      <td class="${t.type==='Credit'?'amount-credit':'amount-debit'}">
+        ${t.type==='Credit'?'+':'-'}${fmt(t.amount)}
+      </td>
+      <td><span class="badge ${t.badgeClass}">${t.category}</span></td>
+    </tr>`).join('');
+}
+
+function escHtml(str){ return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   FILTER / SEARCH
+────────────────────────────────────────────────────────────────────────── */
+function filterTable() {
+  const q    = document.getElementById('search-input').value.toLowerCase();
+  const type = document.getElementById('type-filter').value;
+  const cat  = document.getElementById('cat-filter').value;
+
+  const filtered = allTransactions.filter(t => {
+    if (type === 'credit' && t.type !== 'Credit') return false;
+    if (type === 'debit'  && t.type !== 'Debit')  return false;
+    if (cat  && t.category !== cat) return false;
+    if (q && !`${t.date} ${t.description} ${t.amount} ${t.category}`.toLowerCase().includes(q)) return false;
+    return true;
+  });
+  renderTable(filtered);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   EXCEL DOWNLOAD (SheetJS)
+────────────────────────────────────────────────────────────────────────── */
+function downloadExcel() {
+  if (!allTransactions.length) { showAlert('No transactions to export.','warning'); return; }
+
+  /* Build worksheet data */
+  const wsData = [
+    ['Date','Description','Type','Amount','Category','Source File'],
+    ...allTransactions.map(t => [
+      t.date,
+      t.description,
+      t.type,
+      t.type === 'Credit' ? t.amount : -t.amount,
+      t.category,
+      t.source,
+    ])
+  ];
+
+  const wb  = XLSX.utils.book_new();
+  const ws  = XLSX.utils.aoa_to_sheet(wsData);
+
+  /* Column widths */
+  ws['!cols'] = [
+    {wch:14},{wch:45},{wch:10},{wch:16},{wch:18},{wch:30}
+  ];
+
+  /* Style header row bold (SheetJS community edition doesn't support full cell styles, but sets widths) */
+  XLSX.utils.book_append_sheet(wb, ws, 'Transactions');
+
+  /* Summary sheet */
+  const credits = allTransactions.filter(t=>t.type==='Credit').reduce((s,t)=>s+t.amount,0);
+  const debits  = allTransactions.filter(t=>t.type==='Debit').reduce((s,t)=>s+t.amount,0);
+  const summaryData = [
+    ['Summary',''],
+    ['Total Transactions', allTransactions.length],
+    ['Total Credits', credits],
+    ['Total Debits', debits],
+    ['Net (Credits − Debits)', credits - debits],
+    ['',''],
+    ['Category Breakdown','Amount'],
+    ...CATEGORIES.map(cat => {
+      const amt = allTransactions.filter(t=>t.category===cat.label).reduce((s,t)=>s+(t.type==='Credit'?t.amount:-t.amount),0);
+      return [cat.label, amt];
+    }),
+  ];
+  const ws2 = XLSX.utils.aoa_to_sheet(summaryData);
+  ws2['!cols'] = [{wch:28},{wch:18}];
+  XLSX.utils.book_append_sheet(wb, ws2, 'Summary');
+
+  const date = new Date().toISOString().slice(0,10);
+  XLSX.writeFile(wb, `bank_transactions_${date}.xlsx`);
+  showAlert('Excel file downloaded successfully!','success');
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   ALERT SYSTEM
+────────────────────────────────────────────────────────────────────────── */
+function showAlert(msg, type='info') {
+  const icons = { info:'ℹ️', success:'✅', warning:'⚠️', error:'❌' };
+  const area  = document.getElementById('alert-area');
+  const el    = document.createElement('div');
+  el.className = `alert ${type}`;
+  el.innerHTML = `<span class="alert-icon">${icons[type]||'ℹ️'}</span><span style="flex:1">${msg}</span><button class="alert-close" onclick="this.parentElement.remove()">×</button>`;
+  area.appendChild(el);
+  setTimeout(()=>{ if(el.parentElement) el.remove(); }, 5500);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   DRAG-OVER visual on whole document
+────────────────────────────────────────────────────────────────────────── */
+document.addEventListener('dragover', e => e.preventDefault());
+document.addEventListener('drop', e => {
+  e.preventDefault();
+  const files = [...e.dataTransfer.files].filter(f=>f.type==='application/pdf');
+  if (files.length) addFiles(files);
+});
+</script>
 </body>
 </html>
