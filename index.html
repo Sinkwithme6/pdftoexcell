@@ -1,174 +1,167 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>Bank Transaction Extractor</title>
-
 <!--
-  LIBRARIES LOADED:
-  1. PDF.js  — extracts text from digital (text-based) PDFs
-  2. Tesseract.js — OCR for scanned/image-based PDFs (reads like a human)
-  3. SheetJS — generates real .xlsx Excel files
+  LIBRARIES:
+  · PDF.js  v2  — text extraction from digital PDFs
+  · Tesseract.js v5 — OCR for scanned/image PDFs (fallback)
+  · SheetJS — real .xlsx Excel generation
 -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 <script src="https://unpkg.com/tesseract.js@5.0.4/dist/tesseract.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
 <style>
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700&family=DM+Mono:wght@400;500&display=swap');
-
-/* ── Design tokens ─────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 :root{
-  --ink:#0d1117; --ink-mid:#3d4451; --ink-lt:#6b7280;
-  --paper:#eef1f8; --white:#fff;
-  --accent:#1a56db; --accent-lt:#e8effe;
-  --ok:#059669; --ok-lt:#d1fae5;
-  --warn:#d97706; --warn-lt:#fef3c7;
-  --err:#dc2626; --err-lt:#fee2e2;
-  --border:#dde3ef;
-  --r:14px; --rs:9px;
+  --bg:#f0f3fa; --surface:#fff; --border:#dde4f0;
+  --ink:#111827; --ink2:#4b5563; --ink3:#9ca3af;
+  --blue:#2563eb; --blue-lt:#eff6ff; --blue-dk:#1d4ed8;
+  --green:#059669; --green-lt:#ecfdf5;
+  --red:#dc2626;  --red-lt:#fef2f2;
+  --amber:#d97706; --amber-lt:#fffbeb;
+  --r:12px; --rs:8px;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'DM Sans',system-ui,sans-serif;background:var(--paper);color:var(--ink);min-height:100vh;font-size:15px;line-height:1.6;}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;font-size:14px;}
 
-/* ── Header ──────────────────────────────────────────────── */
-.hdr{background:linear-gradient(120deg,#0b2461 0%,#1a56db 65%,#2563eb 100%);color:#fff;padding:0 24px;box-shadow:0 2px 16px rgba(26,86,219,.4);}
-.hdr-in{max-width:1100px;margin:0 auto;display:flex;align-items:center;gap:14px;height:66px;}
-.hdr-logo{font-size:28px;}
-.hdr-text h1{font-size:19px;font-weight:700;}
-.hdr-text p{font-size:12.5px;opacity:.75;}
-.hdr-tag{margin-left:auto;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.3);border-radius:20px;padding:4px 14px;font-size:12px;font-weight:500;white-space:nowrap;}
+/* HEADER */
+.hdr{background:linear-gradient(135deg,#1e3a8a 0%,#2563eb 100%);padding:0 24px;box-shadow:0 2px 12px rgba(37,99,235,.4);}
+.hdr-in{max-width:1200px;margin:0 auto;display:flex;align-items:center;gap:14px;height:62px;}
+.hdr-logo{font-size:26px;}
+.hdr h1{font-size:18px;font-weight:700;color:#fff;}
+.hdr p{font-size:12px;color:rgba(255,255,255,.7);margin-top:1px;}
+.hdr-pill{margin-left:auto;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);border-radius:20px;padding:4px 14px;font-size:11.5px;font-weight:600;color:#fff;}
 
-/* ── Layout ───────────────────────────────────────────────── */
-.wrap{max-width:1100px;margin:0 auto;padding:28px 20px 80px;}
-.sec{font-size:11.5px;font-weight:700;letter-spacing:.9px;text-transform:uppercase;color:var(--ink-lt);margin-bottom:12px;display:flex;align-items:center;gap:10px;}
-.sec::after{content:'';flex:1;height:1px;background:var(--border);}
-.card{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:24px;box-shadow:0 1px 4px rgba(0,0,0,.06);}
-.mt{margin-top:24px;}
+/* MAIN */
+.main{max-width:1200px;margin:0 auto;padding:24px 20px 80px;display:grid;grid-template-columns:340px 1fr;gap:20px;align-items:start;}
+@media(max-width:800px){.main{grid-template-columns:1fr;}}
 
-/* ── Mode toggle ──────────────────────────────────────────── */
-.mode-row{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;}
-.mode-btn{
-  display:inline-flex;align-items:center;gap:7px;
-  border:2px solid var(--border);border-radius:var(--rs);
-  padding:9px 18px;font-size:13.5px;font-weight:600;
-  cursor:pointer;background:var(--white);color:var(--ink-mid);
-  transition:all .15s;
-}
-.mode-btn.active{border-color:var(--accent);background:var(--accent-lt);color:var(--accent);}
-.mode-hint{font-size:12.5px;color:var(--ink-lt);margin-top:-10px;margin-bottom:14px;padding:10px 14px;background:#f8f9ff;border-radius:var(--rs);border:1px solid var(--border);}
+/* PANEL */
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;}
+.panel-hdr{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;}
+.panel-hdr h2{font-size:13px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.6px;}
+.panel-body{padding:18px;}
 
-/* ── Drop zone ────────────────────────────────────────────── */
-#drop-zone{border:2.5px dashed #b5c6f0;border-radius:var(--r);background:#f0f5ff;padding:40px 20px;text-align:center;cursor:pointer;transition:all .2s;position:relative;}
-#drop-zone.hover{border-color:var(--accent);background:#dbeafe;transform:scale(1.01);}
-#drop-zone input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;}
-.dz-icon{font-size:42px;display:block;margin-bottom:10px;}
-.dz-title{font-size:17px;font-weight:600;color:var(--accent);margin-bottom:4px;}
-.dz-hint{font-size:13px;color:var(--ink-lt);}
-.btn-up{margin-top:14px;display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;border:none;border-radius:var(--rs);padding:10px 22px;font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 2px 10px rgba(26,86,219,.35);transition:all .15s;}
-.btn-up:hover{background:#1648c0;transform:translateY(-1px);}
+/* DROP ZONE */
+#dz{border:2px dashed #c7d7fa;border-radius:var(--rs);background:#f5f8ff;padding:32px 16px;text-align:center;cursor:pointer;transition:all .18s;position:relative;}
+#dz:hover,#dz.over{border-color:var(--blue);background:#eff6ff;}
+#dz input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;}
+.dz-ico{font-size:36px;display:block;margin-bottom:8px;}
+.dz-t{font-size:14px;font-weight:600;color:var(--blue);margin-bottom:3px;}
+.dz-s{font-size:12px;color:var(--ink3);}
 
-/* ── Chips ────────────────────────────────────────────────── */
-#chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;}
-.chip{display:inline-flex;align-items:center;gap:5px;background:#e8effe;border:1px solid #c4d4fb;border-radius:20px;padding:4px 10px 4px 8px;font-size:12.5px;font-weight:500;color:var(--accent);animation:pop .2s ease;}
-@keyframes pop{from{opacity:0;transform:scale(.8);}to{opacity:1;transform:scale(1);}}
-.chip-x{background:none;border:none;cursor:pointer;font-size:15px;color:#5a7ec7;opacity:.7;transition:opacity .1s;padding:0 2px;}
-.chip-x:hover{opacity:1;}
+/* CHIPS */
+#chips{margin-top:12px;display:flex;flex-direction:column;gap:6px;}
+.chip{display:flex;align-items:center;gap:8px;background:#f5f8ff;border:1px solid #dbeafe;border-radius:var(--rs);padding:8px 10px;font-size:12.5px;animation:pin .2s ease;}
+@keyframes pin{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:translateY(0);}}
+.chip-name{flex:1;font-weight:500;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.chip-size{font-size:11px;color:var(--ink3);}
+.chip-rm{background:none;border:none;cursor:pointer;font-size:16px;color:#93c5fd;transition:color .1s;padding:0 2px;}
+.chip-rm:hover{color:var(--red);}
+.chip-mode{font-size:10px;font-weight:700;border-radius:10px;padding:2px 7px;background:#dbeafe;color:#1e40af;}
+.chip-mode.ocr{background:#fef3c7;color:#92400e;}
 
-/* ── Buttons ──────────────────────────────────────────────── */
-.act-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:18px;}
-.btn-go{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#0b2461,#1a56db);color:#fff;border:none;border-radius:var(--rs);padding:12px 28px;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 3px 14px rgba(26,86,219,.4);transition:all .15s;}
-.btn-go:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 6px 22px rgba(26,86,219,.5);}
-.btn-go:disabled{opacity:.4;cursor:not-allowed;transform:none;}
-.btn-clr{background:#fff;border:1.5px solid var(--border);border-radius:var(--rs);padding:12px 20px;font-size:14px;font-weight:500;cursor:pointer;color:var(--ink-mid);transition:all .15s;}
-.btn-clr:hover{background:var(--paper);}
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;border:none;border-radius:var(--rs);font-weight:600;cursor:pointer;transition:all .15s;font-size:14px;}
+.btn-primary{background:var(--blue);color:#fff;padding:11px 20px;width:100%;box-shadow:0 2px 8px rgba(37,99,235,.35);}
+.btn-primary:hover:not(:disabled){background:var(--blue-dk);transform:translateY(-1px);}
+.btn-primary:disabled{opacity:.4;cursor:not-allowed;transform:none;}
+.btn-ghost{background:transparent;border:1.5px solid var(--border);color:var(--ink2);padding:9px 16px;font-size:13px;width:100%;margin-top:8px;}
+.btn-ghost:hover{background:var(--bg);}
+.btn-dl{background:var(--green);color:#fff;padding:12px 24px;font-size:15px;font-weight:700;box-shadow:0 2px 10px rgba(5,150,105,.35);}
+.btn-dl:hover{background:#047857;transform:translateY(-1px);}
+.btn-dl:disabled{opacity:.35;cursor:not-allowed;transform:none;}
 
-/* ── Progress ─────────────────────────────────────────────── */
-#prog-wrap{display:none;margin-top:20px;}
-.prog-track{background:#dde8fb;border-radius:20px;height:11px;overflow:hidden;margin:8px 0 4px;}
-.prog-fill{height:100%;border-radius:20px;background:linear-gradient(90deg,#1a56db,#60a5fa);transition:width .4s ease;width:0%;}
-.prog-lbl{font-size:13px;color:var(--ink-mid);}
-.prog-sub{font-size:11.5px;color:var(--ink-lt);margin-top:3px;}
+/* PROGRESS */
+#prog-box{display:none;margin-top:16px;}
+.prog-label{font-size:12.5px;color:var(--ink2);margin-bottom:6px;display:flex;justify-content:space-between;}
+.prog-track{height:8px;background:#dbeafe;border-radius:20px;overflow:hidden;}
+.prog-fill{height:100%;background:linear-gradient(90deg,#2563eb,#60a5fa);border-radius:20px;transition:width .4s ease;width:0%;}
+.prog-sub{font-size:11.5px;color:var(--ink3);margin-top:5px;}
 
-/* ── OCR page strip ───────────────────────────────────────── */
-#ocr-strip{display:none;margin-top:12px;gap:8px;flex-wrap:wrap;}
-.ocr-thumb{position:relative;display:inline-block;}
-.ocr-thumb img{width:72px;height:90px;object-fit:cover;border-radius:6px;border:2px solid var(--border);}
-.ocr-thumb .pg-lbl{position:absolute;bottom:3px;left:0;right:0;text-align:center;font-size:10px;font-weight:600;color:#fff;text-shadow:0 1px 3px #000;}
-.ocr-thumb.done img{border-color:var(--ok);}
-.ocr-thumb.active img{border-color:var(--accent);box-shadow:0 0 0 3px #bfdbfe;}
+/* LOG */
+#log{display:none;margin-top:12px;background:#f8fafc;border:1px solid var(--border);border-radius:var(--rs);padding:10px 12px;max-height:160px;overflow-y:auto;font-size:11.5px;font-family:'JetBrains Mono',monospace;color:var(--ink2);line-height:1.8;}
+.log-ok{color:#059669;} .log-warn{color:#d97706;} .log-err{color:#dc2626;}
 
-/* ── Log ──────────────────────────────────────────────────── */
-#log{display:none;margin-top:12px;background:#f8faff;border:1px solid var(--border);border-radius:var(--rs);padding:12px 14px;max-height:150px;overflow-y:auto;font-size:12px;color:var(--ink-mid);font-family:'DM Mono',monospace;line-height:1.7;}
+/* RIGHT PANEL — RESULTS */
+.results-wrap{display:flex;flex-direction:column;gap:16px;}
 
-/* ── Stats ────────────────────────────────────────────────── */
-#stats-wrap{display:none;margin-top:26px;}
-.stats-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;}
-.stat-c{background:var(--white);border:1px solid var(--border);border-radius:var(--rs);padding:16px 20px;text-align:center;}
-.stat-l{font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:var(--ink-lt);margin-bottom:5px;}
-.stat-v{font-size:22px;font-weight:700;font-family:'DM Mono',monospace;}
-.stat-v.cr{color:var(--ok);}
-.stat-v.dr{color:var(--err);}
+/* SUMMARY CARDS */
+.sum-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
+.sum-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);padding:14px 16px;}
+.sum-lbl{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--ink3);margin-bottom:4px;}
+.sum-val{font-size:20px;font-weight:700;font-family:'JetBrains Mono',monospace;}
+.sum-val.cr{color:var(--green);}
+.sum-val.dr{color:var(--red);}
+.sum-val.nt{color:var(--ink);}
 
-/* ── Banners ──────────────────────────────────────────────── */
-.banner{margin-top:14px;border-radius:var(--rs);padding:13px 16px;display:flex;align-items:flex-start;gap:10px;font-size:13.5px;}
-.banner.ok  {background:var(--ok-lt);border:1px solid #6ee7b7;color:#065f46;}
-.banner.warn{background:var(--warn-lt);border:1px solid #fcd34d;color:#92400e;}
-.banner.err {background:var(--err-lt);border:1px solid #fca5a5;color:#991b1b;}
-.b-icon{font-size:18px;flex-shrink:0;}
+/* BANNER */
+.banner{border-radius:var(--rs);padding:11px 14px;display:flex;align-items:flex-start;gap:9px;font-size:13px;}
+.banner.ok{background:var(--green-lt);border:1px solid #6ee7b7;color:#065f46;}
+.banner.warn{background:var(--amber-lt);border:1px solid #fcd34d;color:#78350f;}
+.banner.err{background:var(--red-lt);border:1px solid #fca5a5;color:#991b1b;}
+.banner-icon{flex-shrink:0;font-size:16px;margin-top:1px;}
 
-/* ── Table ────────────────────────────────────────────────── */
-#tbl-wrap{display:none;margin-top:26px;}
-.tbl-bar{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center;}
-.s-inp{flex:1;min-width:180px;border:1px solid var(--border);border-radius:var(--rs);padding:8px 14px;font-size:14px;outline:none;transition:border-color .15s;}
-.s-inp:focus{border-color:var(--accent);}
-.s-sel{border:1px solid var(--border);border-radius:var(--rs);padding:8px 10px;font-size:13px;background:var(--white);color:var(--ink-mid);cursor:pointer;outline:none;}
-.rc{margin-left:auto;font-size:13px;color:var(--ink-lt);}
-.tbl-out{overflow-x:auto;border:1px solid var(--border);border-radius:var(--rs);}
-table{width:100%;border-collapse:collapse;font-size:13.5px;}
-thead th{background:#f0f4ff;padding:10px 14px;text-align:left;font-size:11.5px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--ink-mid);border-bottom:1px solid var(--border);white-space:nowrap;}
-tbody tr{border-bottom:1px solid #f0f2f8;transition:background .1s;}
-tbody tr:last-child{border-bottom:none;}
-tbody tr:hover{background:#f6f9ff;}
-tbody td{padding:9px 14px;vertical-align:middle;}
-.mono{font-family:'DM Mono',monospace;font-size:12.5px;}
-.cr-t{color:var(--ok);font-weight:600;}
-.dr-t{color:var(--err);font-weight:600;}
-.badge{display:inline-block;border-radius:20px;padding:2px 10px;font-size:11px;font-weight:600;}
+/* DOWNLOAD ALWAYS VISIBLE */
+.dl-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+.dl-text h3{font-size:15px;font-weight:700;margin-bottom:3px;}
+.dl-text p{font-size:12.5px;color:var(--ink2);}
+
+/* TABLE */
+.tbl-panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;}
+.tbl-toolbar{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap;align-items:center;background:#fafbff;}
+.s-inp{flex:1;min-width:160px;border:1px solid var(--border);border-radius:var(--rs);padding:7px 12px;font-size:13px;outline:none;font-family:inherit;}
+.s-inp:focus{border-color:var(--blue);}
+.s-sel{border:1px solid var(--border);border-radius:var(--rs);padding:7px 10px;font-size:12.5px;background:#fff;color:var(--ink2);cursor:pointer;outline:none;font-family:inherit;}
+.tbl-count{font-size:12px;color:var(--ink3);margin-left:auto;}
+.tbl-wrap{overflow-x:auto;max-height:520px;overflow-y:auto;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+thead{position:sticky;top:0;z-index:5;}
+thead th{background:#f0f4ff;padding:9px 14px;text-align:left;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--ink2);border-bottom:1px solid var(--border);white-space:nowrap;}
+tbody tr{border-bottom:1px solid #f3f4f8;transition:background .08s;}
+tbody tr:hover{background:#f8faff;}
+tbody td{padding:8px 14px;vertical-align:middle;}
+.mono{font-family:'JetBrains Mono',monospace;font-size:12px;}
+.cr-t{color:var(--green);font-weight:600;}
+.dr-t{color:var(--red);font-weight:600;}
+.badge{display:inline-block;border-radius:10px;padding:2px 9px;font-size:11px;font-weight:600;}
 .b-salary{background:#d1fae5;color:#065f46;}
 .b-rent{background:#fee2e2;color:#991b1b;}
 .b-util{background:#fef3c7;color:#92400e;}
 .b-dep{background:#dbeafe;color:#1e40af;}
 .b-trf{background:#ede9fe;color:#5b21b6;}
 .b-food{background:#fce7f3;color:#9d174d;}
-.b-misc{background:#f1f5f9;color:#475569;}
+.b-fuel{background:#fff7ed;color:#9a3412;}
+.b-misc{background:#f3f4f6;color:#4b5563;}
 .b-cr{background:#d1fae5;color:#065f46;}
 .b-dr{background:#fee2e2;color:#991b1b;}
-.desc-c{max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.desc-td{max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 
-/* ── Download ─────────────────────────────────────────────── */
-#dl-wrap{display:none;margin-top:26px;}
-.dl-in{display:flex;align-items:center;gap:18px;flex-wrap:wrap;}
-.btn-dl{display:inline-flex;align-items:center;gap:10px;background:linear-gradient(135deg,#065f46,#059669);color:#fff;border:none;border-radius:var(--rs);padding:13px 30px;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 3px 14px rgba(5,150,105,.4);transition:all .15s;}
-.btn-dl:hover{transform:translateY(-2px);box-shadow:0 6px 22px rgba(5,150,105,.5);}
+/* TOASTS */
+#toasts{position:fixed;bottom:24px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px;width:320px;}
+.toast{background:var(--surface);border-radius:var(--rs);border-left:4px solid var(--blue);box-shadow:0 4px 20px rgba(0,0,0,.13);padding:12px 14px;font-size:13px;display:flex;align-items:center;gap:9px;animation:tin .22s ease;}
+@keyframes tin{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+.toast.ok{border-color:var(--green);}
+.toast.err{border-color:var(--red);}
+.toast.warn{border-color:var(--amber);}
+.t-x{margin-left:auto;background:none;border:none;cursor:pointer;font-size:17px;opacity:.4;}
+.t-x:hover{opacity:.9;}
 
-/* ── Toasts ───────────────────────────────────────────────── */
-#toasts{position:fixed;top:76px;right:18px;z-index:9999;display:flex;flex-direction:column;gap:8px;width:340px;}
-.toast{background:var(--white);border-radius:var(--rs);border-left:4px solid var(--accent);box-shadow:0 4px 20px rgba(0,0,0,.14);padding:13px 15px;font-size:13.5px;display:flex;align-items:flex-start;gap:10px;animation:tin .25s ease;}
-@keyframes tin{from{opacity:0;transform:translateX(30px);}to{opacity:1;transform:translateX(0);}}
-.toast.t-err{border-color:var(--err);}
-.toast.t-ok{border-color:var(--ok);}
-.toast.t-warn{border-color:var(--warn);}
-.t-x{margin-left:auto;background:none;border:none;cursor:pointer;font-size:18px;opacity:.5;transition:opacity .1s;}
-.t-x:hover{opacity:1;}
-
-/* ── Spinner ──────────────────────────────────────────────── */
-.spin{display:inline-block;width:16px;height:16px;border:2.5px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite;vertical-align:middle;}
+/* SPINNER */
+.spin{display:inline-block;width:15px;height:15px;border:2.5px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:sp .65s linear infinite;}
 @keyframes sp{to{transform:rotate(360deg);}}
 
-/* ── OCR warning pill ─────────────────────────────────────── */
-.ocr-badge{display:inline-flex;align-items:center;gap:6px;background:#fef3c7;border:1px solid #fcd34d;color:#92400e;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600;margin-left:10px;}
+/* EMPTY STATE */
+.empty{padding:48px 24px;text-align:center;color:var(--ink3);}
+.empty-icon{font-size:40px;display:block;margin-bottom:10px;}
+.empty p{font-size:14px;}
+
+/* SECTION LABEL */
+.sec{font-size:11.5px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--ink3);margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+.sec::after{content:'';flex:1;height:1px;background:var(--border);}
 </style>
 </head>
 <body>
@@ -176,163 +169,140 @@ tbody td{padding:9px 14px;vertical-align:middle;}
 <header class="hdr">
   <div class="hdr-in">
     <span class="hdr-logo">🏦</span>
-    <div class="hdr-text">
+    <div>
       <h1>Bank Transaction Extractor</h1>
-      <p>Upload bank statement PDFs → clean Excel file · Works with scanned &amp; digital PDFs</p>
+      <p>Supports Chase, First Fidelity, Nepali banks &amp; more · Digital + Scanned PDFs</p>
     </div>
-    <span class="hdr-tag">100% Local · No API</span>
+    <span class="hdr-pill">100% Local · No Cloud</span>
   </div>
 </header>
 
 <div id="toasts"></div>
 
-<div class="wrap">
+<div class="main">
 
-  <!-- ── STEP 1 ─────────────────────────────────────────── -->
-  <div class="sec">Step 1 — Upload PDF Statements</div>
-  <div class="card">
+  <!-- ══ LEFT PANEL: UPLOAD ══════════════════════════════════ -->
+  <div style="display:flex;flex-direction:column;gap:14px;">
 
-    <!-- Mode selector -->
-    <div style="margin-bottom:6px;font-size:13px;font-weight:600;color:var(--ink-mid);">Extraction Mode</div>
-    <div class="mode-row">
-      <button class="mode-btn active" id="mode-auto" onclick="setMode('auto')">🤖 Auto-detect <small style="font-weight:400;font-size:11px">(recommended)</small></button>
-      <button class="mode-btn" id="mode-digital" onclick="setMode('digital')">📝 Digital PDF only</button>
-      <button class="mode-btn" id="mode-ocr" onclick="setMode('ocr')">🔍 Force OCR (scanned)</button>
-    </div>
-    <div class="mode-hint" id="mode-hint">
-      <strong>Auto-detect:</strong> First tries fast text extraction. If too little text is found (&lt;50 chars/page), automatically switches to OCR. Best for most cases.
-    </div>
-
-    <!-- Drop zone -->
-    <div id="drop-zone">
-      <input type="file" id="file-input" accept=".pdf" multiple />
-      <span class="dz-icon">📄</span>
-      <div class="dz-title">Drop your bank PDFs here</div>
-      <div class="dz-hint">or click to browse · up to 12 files · digital or scanned</div>
-      <button class="btn-up" onclick="document.getElementById('file-input').click();event.stopPropagation();">⬆ Upload PDF(s)</button>
-    </div>
-
-    <div id="chips"></div>
-
-    <div class="act-row">
-      <button class="btn-go" id="btn-go" disabled>
-        <span id="btn-lbl">⚙ Extract Transactions</span>
-      </button>
-      <button class="btn-clr" onclick="clearAll()">✕ Clear All</button>
-    </div>
-
-    <!-- Progress -->
-    <div id="prog-wrap">
-      <div class="prog-lbl" id="prog-lbl">Initialising…</div>
-      <div class="prog-track"><div class="prog-fill" id="prog-bar"></div></div>
-      <div class="prog-sub" id="prog-sub"></div>
-    </div>
-
-    <!-- OCR page thumbnails -->
-    <div id="ocr-strip" style="display:none;margin-top:12px;display:none;gap:8px;flex-wrap:wrap;"></div>
-
-    <!-- Log -->
-    <div id="log"></div>
-  </div>
-
-  <!-- ── STEP 2: STATS ──────────────────────────────────── -->
-  <div id="stats-wrap">
-    <div class="sec mt">Step 2 — Summary &amp; Validation</div>
-    <div class="stats-g">
-      <div class="stat-c"><div class="stat-l">Transactions</div><div class="stat-v" id="s-cnt">0</div></div>
-      <div class="stat-c"><div class="stat-l">Total Credits</div><div class="stat-v cr" id="s-cr">0.00</div></div>
-      <div class="stat-c"><div class="stat-l">Total Debits</div><div class="stat-v dr" id="s-dr">0.00</div></div>
-      <div class="stat-c"><div class="stat-l">Net</div><div class="stat-v" id="s-net">0.00</div></div>
-    </div>
-    <div id="v-banner"></div>
-  </div>
-
-  <!-- ── STEP 3: TABLE ──────────────────────────────────── -->
-  <div id="tbl-wrap">
-    <div class="sec mt">
-      Step 3 — Extracted Transactions
-      <span class="rc" id="rc"></span>
-    </div>
-    <div class="card" style="padding:16px">
-      <div class="tbl-bar">
-        <input class="s-inp" id="s-inp" placeholder="🔍 Search…" oninput="filterTable()" />
-        <select class="s-sel" id="f-type" onchange="filterTable()">
-          <option value="">All Types</option>
-          <option>Credit</option><option>Debit</option>
-        </select>
-        <select class="s-sel" id="f-cat" onchange="filterTable()">
-          <option value="">All Categories</option>
-          <option>Salary</option><option>Rent</option><option>Utilities</option>
-          <option>Deposit</option><option>Transfer</option><option>Food</option>
-          <option>Miscellaneous</option>
-        </select>
-      </div>
-      <div class="tbl-out">
-        <table>
-          <thead><tr><th>#</th><th>Date</th><th>Description</th><th>Type</th><th>Amount</th><th>Category</th></tr></thead>
-          <tbody id="tbody"></tbody>
-        </table>
+    <!-- Upload card -->
+    <div class="panel">
+      <div class="panel-hdr"><h2>📂 Upload PDFs</h2></div>
+      <div class="panel-body">
+        <div id="dz">
+          <input type="file" id="fi" accept=".pdf" multiple/>
+          <span class="dz-ico">📄</span>
+          <div class="dz-t">Drop PDFs here or click to browse</div>
+          <div class="dz-s">Up to 12 files · digital or scanned</div>
+        </div>
+        <div id="chips"></div>
+        <div style="margin-top:14px;">
+          <button class="btn btn-primary" id="btn-go" disabled>
+            <span id="btn-lbl">⚙ Extract Transactions</span>
+          </button>
+          <button class="btn btn-ghost" onclick="clearAll()">✕ Clear All</button>
+        </div>
+        <div id="prog-box">
+          <div class="prog-label"><span id="prog-lbl">Processing…</span><span id="prog-pct">0%</span></div>
+          <div class="prog-track"><div class="prog-fill" id="prog-bar"></div></div>
+          <div class="prog-sub" id="prog-sub"></div>
+        </div>
+        <div id="log"></div>
       </div>
     </div>
-  </div>
 
-  <!-- ── STEP 4: DOWNLOAD ───────────────────────────────── -->
-  <div id="dl-wrap">
-    <div class="sec mt">Step 4 — Export</div>
-    <div class="card dl-in">
-      <div>
-        <div style="font-weight:600;margin-bottom:3px;">Your transactions are ready!</div>
-        <div style="font-size:13px;color:var(--ink-lt);">Download a formatted Excel workbook — Transactions + Summary sheets.</div>
+    <!-- Download — always visible -->
+    <div class="panel">
+      <div class="panel-hdr"><h2>📥 Download Excel</h2></div>
+      <div class="panel-body">
+        <p style="font-size:12.5px;color:var(--ink2);margin-bottom:12px;">After extraction, download your transactions as a formatted <strong>.xlsx</strong> file with Transactions + Summary sheets.</p>
+        <button class="btn btn-dl" id="btn-dl" onclick="downloadExcel()" disabled>
+          📥 Download Excel (.xlsx)
+        </button>
+        <div id="dl-info" style="margin-top:10px;font-size:12px;color:var(--ink3);display:none;"></div>
       </div>
-      <button class="btn-dl" onclick="downloadExcel()">📥 Download Excel (.xlsx)</button>
     </div>
-  </div>
 
-</div><!-- /wrap -->
+  </div><!-- /left -->
+
+  <!-- ══ RIGHT PANEL: RESULTS ════════════════════════════════ -->
+  <div class="results-wrap">
+
+    <!-- Summary stats -->
+    <div id="stats-wrap" style="display:none;">
+      <div class="sec">Summary</div>
+      <div class="sum-grid">
+        <div class="sum-card"><div class="sum-lbl">Transactions</div><div class="sum-val nt" id="s-cnt">—</div></div>
+        <div class="sum-card"><div class="sum-lbl">Net Balance</div><div class="sum-val nt" id="s-net">—</div></div>
+        <div class="sum-card"><div class="sum-lbl">Total Credits</div><div class="sum-val cr" id="s-cr">—</div></div>
+        <div class="sum-card"><div class="sum-lbl">Total Debits</div><div class="sum-val dr" id="s-dr">—</div></div>
+      </div>
+      <div id="v-banner" style="margin-top:10px;"></div>
+    </div>
+
+    <!-- Table -->
+    <div id="tbl-wrap" style="display:none;">
+      <div class="sec">Extracted Transactions</div>
+      <div class="tbl-panel">
+        <div class="tbl-toolbar">
+          <input class="s-inp" id="s-inp" placeholder="🔍 Search description, date, amount…" oninput="filterTable()"/>
+          <select class="s-sel" id="f-type" onchange="filterTable()">
+            <option value="">All Types</option>
+            <option>Credit</option><option>Debit</option>
+          </select>
+          <select class="s-sel" id="f-cat" onchange="filterTable()">
+            <option value="">All Categories</option>
+            <option>Salary</option><option>Rent</option><option>Utilities</option>
+            <option>Deposit</option><option>Transfer</option><option>Food</option>
+            <option>Fuel</option><option>Miscellaneous</option>
+          </select>
+          <span class="tbl-count" id="tbl-count"></span>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>#</th><th>Date</th><th>Description</th><th>Type</th><th>Amount</th><th>Category</th><th>Source</th></tr></thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty state -->
+    <div id="empty-state" class="panel">
+      <div class="empty">
+        <span class="empty-icon">📊</span>
+        <p>Upload one or more bank statement PDFs and click<br><strong>Extract Transactions</strong> to get started.</p>
+      </div>
+    </div>
+
+  </div><!-- /right -->
+
+</div><!-- /main -->
 
 <script>
-/* ================================================================
-   PDF.js WORKER SETUP
-================================================================ */
+/* ═══════════════════════════════════════════════════════════════
+   PDF.js SETUP
+═══════════════════════════════════════════════════════════════ */
 pdfjsLib.GlobalWorkerOptions.workerSrc =
   'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
-/* ================================================================
-   STATE
-================================================================ */
+/* ═══════════════════════════════════════════════════════════════
+   CONSTANTS & STATE
+═══════════════════════════════════════════════════════════════ */
+const MAX_FILES = 12;
 let selectedFiles   = [];
 let allTransactions = [];
-let extractionMode  = 'auto';  // 'auto' | 'digital' | 'ocr'
-const MAX_FILES     = 12;
-const OCR_TEXT_THRESHOLD = 50; // chars per page; below this → use OCR
 
-/* ================================================================
-   MODE SELECTOR
-================================================================ */
-const MODE_HINTS = {
-  auto:    '<strong>Auto-detect:</strong> Tries fast text extraction first. If too little text found (&lt;50 chars/page), automatically runs OCR. Best for most cases.',
-  digital: '<strong>Digital PDF:</strong> Fast extraction for bank statements downloaded from internet banking portals. Will not OCR — fails on scanned docs.',
-  ocr:     '<strong>Force OCR:</strong> Uses Tesseract AI to read every page as an image. Works on scanned statements. Slower (30–90 sec per page).',
-};
-
-function setMode(m) {
-  extractionMode = m;
-  ['auto','digital','ocr'].forEach(id => {
-    document.getElementById('mode-' + id).classList.toggle('active', id === m);
-  });
-  document.getElementById('mode-hint').innerHTML = MODE_HINTS[m];
-}
-
-/* ================================================================
+/* ═══════════════════════════════════════════════════════════════
    CATEGORY RULES
-================================================================ */
+═══════════════════════════════════════════════════════════════ */
 const CATS = [
-  { label:'Salary',      cls:'b-salary', kw:['salary','payroll','wages','pay slip','income','stipend','remuneration','bonus','allowance'] },
-  { label:'Rent',        cls:'b-rent',   kw:['rent','lease','landlord','housing','apartment','flat rent','house rent'] },
-  { label:'Utilities',   cls:'b-util',   kw:['electric','water bill','gas bill','internet','broadband','utility','telecom','telephone','mobile recharge','wifi','dstv','cable tv','nea','kukl','worldlink','vianet'] },
-  { label:'Deposit',     cls:'b-dep',    kw:['deposit','saving','fixed deposit','fd ','rd ','recurring deposit','cash deposit','atm deposit'] },
-  { label:'Transfer',    cls:'b-trf',    kw:['transfer','neft','rtgs','imps','upi','wire','remittance','trf','fonepay','esewa','khalti','connectips','ips','swift'] },
-  { label:'Food',        cls:'b-food',   kw:['food','restaurant','cafe','coffee','dining','grocery','supermarket','swiggy','zomato','canteen','bakery','hotel bill','mart'] },
+  { label:'Salary',    cls:'b-salary', kw:['salary','payroll','payroll','wages','pay slip','direct dep','direct deposit','income','stipend','bonus','commission'] },
+  { label:'Rent',      cls:'b-rent',   kw:['rent','lease','landlord','housing','apartment'] },
+  { label:'Utilities', cls:'b-util',   kw:['electric','water bill','gas bill','internet','broadband','utility','telecom','telephone','mobile','wifi','cable tv','nea','kukl','worldlink','vianet','pg&e','atmos','comcast','xfinity'] },
+  { label:'Deposit',   cls:'b-dep',    kw:['deposit','zelle payment from','atm check dep','atm cash dep','ach deposit','venmo','cash dep'] },
+  { label:'Transfer',  cls:'b-trf',    kw:['transfer','zelle payment to','wire','ach','neft','rtgs','imps','upi','fonepay','esewa','khalti','online transfer','realtime transfer'] },
+  { label:'Food',      cls:'b-food',   kw:['restaurant','cafe','coffee','dining','grocery','supermarket','swiggy','zomato','canteen','bakery','mcdonald','taco bell','subway','chipotle','doordash','grubhub','whole foods','ralphs','target','walmart','ralph','7-eleven','in-n-out','jon don','del taco','enchilada','liquor','starbucks'] },
+  { label:'Fuel',      cls:'b-fuel',   kw:['arco','chevron','shell','mobil','exxon','bp','fuel','gasoline','gas station','ampm','circle k','76 gas'] },
   { label:'Miscellaneous', cls:'b-misc', kw:[] },
 ];
 
@@ -342,535 +312,681 @@ function classify(desc) {
     if (c.label==='Miscellaneous') continue;
     if (c.kw.some(k => d.includes(k))) return c;
   }
-  return CATS.find(c=>c.label==='Miscellaneous');
+  return CATS.find(c => c.label==='Miscellaneous');
 }
 
-/* ================================================================
-   FILE INPUT
-================================================================ */
-const fileInput = document.getElementById('file-input');
-const dropZone  = document.getElementById('drop-zone');
+/* ═══════════════════════════════════════════════════════════════
+   FILE HANDLING
+═══════════════════════════════════════════════════════════════ */
+const fi = document.getElementById('fi');
+const dz = document.getElementById('drop-zone') || document.getElementById('dz');
 
-fileInput.addEventListener('change', e => { addFiles([...e.target.files]); e.target.value=''; });
-dropZone.addEventListener('dragover',  e => { e.preventDefault(); dropZone.classList.add('hover'); });
-dropZone.addEventListener('dragleave', () => dropZone.classList.remove('hover'));
-dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('hover'); addFiles([...e.dataTransfer.files]); });
+fi.addEventListener('change', e => { addFiles([...e.target.files]); e.target.value=''; });
+document.getElementById('dz').addEventListener('dragover',  e => { e.preventDefault(); document.getElementById('dz').classList.add('over'); });
+document.getElementById('dz').addEventListener('dragleave', () => document.getElementById('dz').classList.remove('over'));
+document.getElementById('dz').addEventListener('drop', e => { e.preventDefault(); document.getElementById('dz').classList.remove('over'); addFiles([...e.dataTransfer.files]); });
 
-function addFiles(files) {
+async function addFiles(files) {
   for (const f of files) {
-    if (!f.name.toLowerCase().endsWith('.pdf') && f.type!=='application/pdf') { toast('Only PDFs: '+f.name,'t-err'); continue; }
-    if (selectedFiles.length>=MAX_FILES) { toast('Max '+MAX_FILES+' files.','t-warn'); break; }
-    if (!selectedFiles.find(s=>s.name===f.name)) selectedFiles.push(f);
+    if (!f.name.toLowerCase().endsWith('.pdf') && f.type!=='application/pdf') { toast('Only PDFs: '+f.name, 'err'); continue; }
+    if (selectedFiles.length >= MAX_FILES) { toast('Max '+MAX_FILES+' files.','warn'); break; }
+    if (selectedFiles.find(s => s.name===f.name)) continue;
+    // Quick scan to decide digital vs OCR
+    const mode = await quickScan(f);
+    selectedFiles.push({ file:f, mode });
   }
   renderChips();
   document.getElementById('btn-go').disabled = selectedFiles.length===0;
 }
 
-function removeFile(name) {
-  selectedFiles = selectedFiles.filter(f=>f.name!==name);
-  renderChips();
-  document.getElementById('btn-go').disabled = selectedFiles.length===0;
-}
-
-function renderChips() {
-  document.getElementById('chips').innerHTML = selectedFiles.map(f=>`
-    <span class="chip">📄 ${esc(f.name)}
-      <button class="chip-x" onclick="removeFile(${JSON.stringify(f.name)})">×</button>
-    </span>`).join('');
-}
-
-function clearAll() {
-  selectedFiles=[]; allTransactions=[];
-  renderChips(); fileInput.value='';
-  document.getElementById('btn-go').disabled=true;
-  document.getElementById('btn-lbl').textContent='⚙ Extract Transactions';
-  ['prog-wrap','log','stats-wrap','tbl-wrap','dl-wrap','ocr-strip'].forEach(id=>{ document.getElementById(id).style.display='none'; });
-  document.getElementById('tbody').innerHTML='';
-  document.getElementById('v-banner').innerHTML='';
-}
-
-/* ================================================================
-   MAIN PIPELINE
-================================================================ */
-document.getElementById('btn-go').addEventListener('click', runExtraction);
-
-async function runExtraction() {
-  if (!selectedFiles.length) return;
-
-  allTransactions=[];
-  document.getElementById('btn-lbl').innerHTML='<span class="spin"></span> Processing…';
-  document.getElementById('btn-go').disabled=true;
-
-  show('prog-wrap'); show('log');
-  ['stats-wrap','tbl-wrap','dl-wrap'].forEach(id=>{ document.getElementById(id).style.display='none'; });
-  document.getElementById('log').innerHTML='';
-  document.getElementById('ocr-strip').innerHTML='';
-
-  const total=selectedFiles.length;
-  const balInfo={};
-
-  for (let i=0; i<total; i++) {
-    const f=selectedFiles[i];
-    setProgress(Math.round((i/total)*85), `File ${i+1}/${total}: ${f.name}`, '');
-    log(`\n📄 ${f.name}`);
-
-    try {
-      let text='';
-      const mode = await decideMode(f);
-
-      if (mode==='ocr') {
-        log('   🔍 Using OCR (Tesseract) — this may take a minute per page…');
-        text = await extractWithOCR(f, i, total);
-      } else {
-        log('   📝 Using digital text extraction (PDF.js)…');
-        text = await extractDigital(f);
-        log(`   ✓ Got ${text.length} characters`);
-
-        // Auto mode: fallback to OCR if not enough text
-        if (extractionMode==='auto' && text.trim().length < OCR_TEXT_THRESHOLD) {
-          log('   ⚠ Too little text — switching to OCR automatically…');
-          toast('Auto-switching "'+f.name+'" to OCR mode','t-warn');
-          text = await extractWithOCR(f, i, total);
-        }
-      }
-
-      if (!text.trim()) { log('   ✗ No text extracted'); toast('No text from "'+f.name+'"','t-err'); continue; }
-
-      const {transactions, opening, closing} = parseStatement(text, f.name);
-      log(`   ✓ Parsed ${transactions.length} transaction(s)`);
-      allTransactions.push(...transactions);
-      if (opening!==null||closing!==null) balInfo[f.name]={opening,closing};
-
-    } catch(err) {
-      log('   ✗ Error: '+err.message);
-      toast('Error: "'+f.name+'": '+err.message,'t-err');
-      console.error(err);
-    }
-  }
-
-  setProgress(97,'Classifying…','');
-  allTransactions.forEach(tx => { const c=classify(tx.description); tx.category=c.label; tx.catCls=c.cls; });
-  allTransactions.sort((a,b)=>(a.date||'').localeCompare(b.date||''));
-  setProgress(100,`Done! ${allTransactions.length} transaction(s) extracted.`,'');
-  log('\n✅ Complete.');
-  await sleep(400);
-
-  document.getElementById('btn-lbl').textContent='⚙ Extract Transactions';
-  document.getElementById('btn-go').disabled=false;
-
-  renderStats(balInfo);
-  renderTable();
-  show('stats-wrap'); show('tbl-wrap'); show('dl-wrap');
-}
-
-/* ================================================================
-   DECIDE MODE PER FILE
-================================================================ */
-async function decideMode(file) {
-  if (extractionMode==='ocr')     return 'ocr';
-  if (extractionMode==='digital') return 'digital';
-  // Auto: quick peek — read page 1 only
+async function quickScan(file) {
+  // Read first page, count text chars
   try {
     const buf = await file.arrayBuffer();
     const pdf = await pdfjsLib.getDocument({data:buf}).promise;
     const page = await pdf.getPage(1);
     const content = await page.getTextContent();
-    const text = content.items.map(i=>i.str).join(' ');
-    return text.trim().length < OCR_TEXT_THRESHOLD ? 'ocr' : 'digital';
+    const chars = content.items.map(i=>i.str).join('').trim().length;
+    return chars < 80 ? 'ocr' : 'digital';
   } catch { return 'ocr'; }
 }
 
-/* ================================================================
-   DIGITAL EXTRACTION  (PDF.js)
-   Groups text items by Y coordinate → reconstructs table rows
-================================================================ */
+function removeFile(name) {
+  selectedFiles = selectedFiles.filter(f => f.file.name !== name);
+  renderChips();
+  document.getElementById('btn-go').disabled = selectedFiles.length===0;
+}
+
+function renderChips() {
+  document.getElementById('chips').innerHTML = selectedFiles.map(sf => `
+    <div class="chip">
+      <span style="font-size:16px">${sf.mode==='ocr'?'🔍':'📝'}</span>
+      <span class="chip-name">${esc(sf.file.name)}</span>
+      <span class="chip-mode ${sf.mode==='ocr'?'ocr':''}">${sf.mode==='ocr'?'OCR':'Digital'}</span>
+      <button class="chip-rm" onclick="removeFile(${JSON.stringify(sf.file.name)})">×</button>
+    </div>`).join('');
+}
+
+function clearAll() {
+  selectedFiles=[]; allTransactions=[];
+  renderChips();
+  fi.value='';
+  document.getElementById('btn-go').disabled = true;
+  document.getElementById('btn-dl').disabled  = true;
+  document.getElementById('btn-lbl').textContent = '⚙ Extract Transactions';
+  document.getElementById('prog-box').style.display = 'none';
+  document.getElementById('log').style.display      = 'none';
+  document.getElementById('log').innerHTML           = '';
+  document.getElementById('stats-wrap').style.display = 'none';
+  document.getElementById('tbl-wrap').style.display   = 'none';
+  document.getElementById('empty-state').style.display = '';
+  document.getElementById('dl-info').style.display = 'none';
+  document.getElementById('tbody').innerHTML = '';
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   MAIN EXTRACTION PIPELINE
+═══════════════════════════════════════════════════════════════ */
+document.getElementById('btn-go').addEventListener('click', runExtraction);
+
+async function runExtraction() {
+  if (!selectedFiles.length) return;
+  allTransactions = [];
+
+  document.getElementById('btn-lbl').innerHTML = '<span class="spin"></span> Processing…';
+  document.getElementById('btn-go').disabled = true;
+  document.getElementById('btn-dl').disabled = true;
+  document.getElementById('prog-box').style.display = '';
+  document.getElementById('log').style.display      = '';
+  document.getElementById('log').innerHTML           = '';
+  document.getElementById('stats-wrap').style.display  = 'none';
+  document.getElementById('tbl-wrap').style.display    = 'none';
+  document.getElementById('empty-state').style.display = 'none';
+
+  const total    = selectedFiles.length;
+  const balances = {};
+
+  for (let i=0; i<total; i++) {
+    const sf = selectedFiles[i];
+    const f  = sf.file;
+    setP(Math.round((i/total)*80), `File ${i+1}/${total}: ${f.name}`, '');
+    logln(`📄 <b>${esc(f.name)}</b> — mode: <b>${sf.mode}</b>`);
+
+    try {
+      let text = '';
+      if (sf.mode === 'digital') {
+        text = await extractDigital(f);
+        logln(`   ✓ Extracted ${text.length} chars`, 'ok');
+      } else {
+        logln(`   🔍 Running OCR… (${(await getPdfPageCount(f))} pages)`, 'warn');
+        text = await extractOCR(f, i, total);
+      }
+
+      if (!text.trim()) { logln('   ✗ No text found','err'); continue; }
+
+      // Detect bank format and use appropriate parser
+      const bank = detectBank(text);
+      logln(`   🏦 Detected format: <b>${bank}</b>`);
+
+      let result;
+      switch(bank) {
+        case 'Chase':         result = parseChase(text, f.name);       break;
+        case 'FirstFidelity': result = parseFirstFidelity(text, f.name); break;
+        default:              result = parseGeneric(text, f.name);      break;
+      }
+
+      logln(`   ✓ Parsed <b>${result.transactions.length}</b> transaction(s)`, 'ok');
+      allTransactions.push(...result.transactions);
+      if (result.opening!==null || result.closing!==null) {
+        balances[f.name] = { opening: result.opening, closing: result.closing };
+      }
+
+    } catch(err) {
+      logln(`   ✗ Error: ${err.message}`, 'err');
+      console.error(err);
+    }
+  }
+
+  setP(97,'Classifying & sorting…','');
+  allTransactions.forEach(tx => {
+    const c = classify(tx.description);
+    tx.category = c.label;
+    tx.catCls   = c.cls;
+  });
+  allTransactions.sort((a,b) => (a.date||'').localeCompare(b.date||''));
+
+  setP(100, `Done! ${allTransactions.length} transaction(s) extracted.`, '');
+  logln(`✅ <b>Complete.</b> ${allTransactions.length} transactions across ${total} file(s).`, 'ok');
+
+  await sleep(300);
+  document.getElementById('btn-lbl').textContent = '⚙ Extract Transactions';
+  document.getElementById('btn-go').disabled = false;
+  document.getElementById('btn-dl').disabled = allTransactions.length === 0;
+
+  renderStats(balances);
+  renderTable();
+  document.getElementById('stats-wrap').style.display  = '';
+  document.getElementById('tbl-wrap').style.display    = '';
+
+  if (allTransactions.length > 0) {
+    const credits = allTransactions.filter(t=>t.type==='Credit').reduce((s,t)=>s+t.amount,0);
+    const debits  = allTransactions.filter(t=>t.type==='Debit').reduce((s,t)=>s+t.amount,0);
+    document.getElementById('dl-info').textContent = `${allTransactions.length} rows · Credits: ${fmt(credits)} · Debits: ${fmt(debits)}`;
+    document.getElementById('dl-info').style.display = '';
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   BANK FORMAT DETECTOR
+   Looks for unique keywords in each bank's statements.
+═══════════════════════════════════════════════════════════════ */
+function detectBank(text) {
+  const t = text.toLowerCase();
+  if (t.includes('chase') || t.includes('jpmorgan') || t.includes('deposits and additions') || t.includes('atm & debit card withdrawals')) return 'Chase';
+  if (t.includes('first fidelity') || t.includes('checks cleared') || t.includes('easy interest-business') || t.includes('burke, sd')) return 'FirstFidelity';
+  return 'Generic';
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   DIGITAL TEXT EXTRACTION  (PDF.js)
+   Groups items by Y coordinate → reconstructs original row layout.
+═══════════════════════════════════════════════════════════════ */
 async function extractDigital(file) {
   const buf = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({data:buf}).promise;
-  log(`   Pages: ${pdf.numPages}`);
-  let full='';
+  let full  = '';
 
   for (let p=1; p<=pdf.numPages; p++) {
     const page    = await pdf.getPage(p);
     const content = await page.getTextContent({normalizeWhitespace:true});
 
-    const lineMap={};
+    // Group by Y pos (±2px tolerance)
+    const map = {};
     for (const item of content.items) {
-      if (!item.str||!item.str.trim()) continue;
-      const y=Math.round(item.transform[5]/3)*3;
-      const x=item.transform[4];
-      if (!lineMap[y]) lineMap[y]=[];
-      lineMap[y].push({x,str:item.str});
+      if (!item.str.trim()) continue;
+      const y = Math.round(item.transform[5] / 2) * 2;
+      const x = item.transform[4];
+      (map[y] = map[y]||[]).push({x, s: item.str});
     }
 
-    const ys=Object.keys(lineMap).map(Number).sort((a,b)=>b-a);
+    const ys = Object.keys(map).map(Number).sort((a,b)=>b-a);
     for (const y of ys) {
-      const line=lineMap[y].sort((a,b)=>a.x-b.x).map(p=>p.str).join('  ').replace(/\s{3,}/g,'  ').trim();
-      if (line) full+=line+'\n';
+      const line = map[y].sort((a,b)=>a.x-b.x).map(i=>i.s).join('  ').replace(/\s{3,}/g,'  ').trim();
+      if (line) full += line + '\n';
     }
-    full+='\n';
+    full += '\n';
   }
   return full;
 }
 
-/* ================================================================
-   OCR EXTRACTION  (Tesseract.js)
-   Renders each PDF page to a canvas → feeds image to Tesseract.
-   Works for scanned statements, image-embedded PDFs.
-================================================================ */
-async function extractWithOCR(file, fileIdx, totalFiles) {
+async function getPdfPageCount(file) {
   const buf = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({data:buf}).promise;
-  const nPages = pdf.numPages;
-  log(`   Pages to OCR: ${nPages}`);
+  return pdf.numPages;
+}
 
-  // Show page thumbnail strip
-  const strip = document.getElementById('ocr-strip');
-  strip.style.display='flex';
-  strip.innerHTML='';
-  const thumbEls=[];
-  for (let p=1;p<=nPages;p++) {
-    const div=document.createElement('div');
-    div.className='ocr-thumb';
-    div.id=`thumb-${p}`;
-    div.innerHTML=`<div style="width:72px;height:90px;background:#e8effe;border-radius:6px;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:20px;">📄</div><span class="pg-lbl">pg ${p}</span>`;
-    strip.appendChild(div);
-    thumbEls.push(div);
-  }
+/* ═══════════════════════════════════════════════════════════════
+   OCR EXTRACTION  (Tesseract.js)
+   Renders each page as high-res canvas → OCR
+═══════════════════════════════════════════════════════════════ */
+async function extractOCR(file, fileIdx, totalFiles) {
+  const buf  = await file.arrayBuffer();
+  const pdf  = await pdfjsLib.getDocument({data:buf}).promise;
+  const nPg  = pdf.numPages;
 
-  // Init Tesseract worker (reuse if exists)
-  if (!window._ocrWorker) {
-    log('   Loading OCR engine (first time may take 10–20 sec)…');
-    setProgress(null,null,'Downloading OCR engine…');
-    window._ocrWorker = await Tesseract.createWorker('eng', 1, {
+  if (!window._ocrW) {
+    logln('   Loading OCR engine (first time ~15 sec)…','warn');
+    setP(null,null,'Downloading OCR engine…');
+    window._ocrW = await Tesseract.createWorker('eng', 1, {
       logger: m => {
         if (m.status==='recognizing text') {
-          const pct=Math.round((m.progress||0)*100);
-          document.getElementById('prog-sub').textContent=`OCR page progress: ${pct}%`;
+          document.getElementById('prog-sub').textContent = `OCR progress: ${Math.round((m.progress||0)*100)}%`;
         }
       }
     });
   }
 
-  let fullText='';
+  let full = '';
+  for (let p=1; p<=nPg; p++) {
+    const pct = Math.round((fileIdx/totalFiles)*80) + Math.round(((p-1)/nPg)*(80/totalFiles));
+    setP(pct, `OCR page ${p}/${nPg}`, 'Recognising text…');
+    logln(`   OCR page ${p}/${nPg}…`);
 
-  for (let p=1; p<=nPages; p++) {
-    const baseProgress = Math.round(((fileIdx/totalFiles)*85)) + Math.round(((p-1)/nPages)*(85/totalFiles));
-    setProgress(baseProgress, `OCR page ${p}/${nPages} of ${file.name}`, `Recognising text…`);
+    const page     = await pdf.getPage(p);
+    const scale    = 2.8;
+    const viewport = page.getViewport({scale});
+    const canvas   = document.createElement('canvas');
+    canvas.width   = viewport.width;
+    canvas.height  = viewport.height;
+    await page.render({canvasContext:canvas.getContext('2d'), viewport}).promise;
 
-    // Mark current thumb as active
-    if (thumbEls[p-1]) thumbEls[p-1].classList.add('active');
+    const {data:{text}} = await window._ocrW.recognize(canvas);
+    full += text + '\n\n';
+    logln(`   ✓ Page ${p}: ${text.trim().split('\n').length} lines`, 'ok');
+  }
+  return full;
+}
 
-    try {
-      // Render page to canvas at high DPI for better OCR accuracy
-      const page     = await pdf.getPage(p);
-      const scale    = 2.5; // higher = better accuracy, slower
-      const viewport = page.getViewport({scale});
-      const canvas   = document.createElement('canvas');
-      canvas.width   = viewport.width;
-      canvas.height  = viewport.height;
-      const ctx      = canvas.getContext('2d');
-      await page.render({canvasContext:ctx, viewport}).promise;
+/* ═══════════════════════════════════════════════════════════════
+   CHASE PARSER
+   Chase statements have clear section headers:
+   "DEPOSITS AND ADDITIONS"  → credits
+   "ATM & DEBIT CARD WITHDRAWALS" → debits
+   "ELECTRONIC WITHDRAWALS"  → debits
+   Each row: MM/DD  DESCRIPTION  AMOUNT
+═══════════════════════════════════════════════════════════════ */
+function parseChase(text, fname) {
+  const lines = text.split('\n').map(l=>l.trim()).filter(Boolean);
+  const transactions = [];
+  let opening = null, closing = null;
+  let section = '';  // current section: 'credit' | 'debit' | ''
 
-      // Run OCR on the canvas image
-      const {data:{text}} = await window._ocrWorker.recognize(canvas);
-      fullText += text + '\n\n';
-      log(`   ✓ Page ${p}: ${text.trim().split('\n').length} lines`);
+  // Section header patterns
+  const SEC_CR = /deposits\s*and\s*additions/i;
+  const SEC_DR = /atm\s*&\s*debit\s*card\s*withdrawals|electronic\s*withdrawals|fees?\b/i;
+  const SEC_END= /daily\s*ending\s*balance|atm\s*&\s*debit\s*card\s*summary|total\s*(deposits|atm|electronic|fees)/i;
 
-      // Mark thumb as done
-      if (thumbEls[p-1]) {
-        thumbEls[p-1].classList.remove('active');
-        thumbEls[p-1].classList.add('done');
-        // Replace placeholder with actual page thumbnail
-        const thumb=document.createElement('img');
-        thumb.src=canvas.toDataURL('image/jpeg',0.5);
-        thumb.style.cssText='width:72px;height:90px;object-fit:cover;border-radius:6px;';
-        thumbEls[p-1].querySelector('div').replaceWith(thumb);
-      }
-    } catch(err) {
-      log(`   ✗ Page ${p} OCR failed: ${err.message}`);
+  // Balance lines
+  const BAL_BEGIN = /beginning\s*balance[^\d]*([\d,]+\.\d{2})/i;
+  const BAL_END   = /ending\s*balance[^\d]*([\d,]+\.\d{2})/i;
+
+  // Chase date: MM/DD (no year)
+  const DATE_RX = /^(\d{1,2})\/(\d{2})\b/;
+
+  // Current statement year — parse from header
+  let stmtYear = new Date().getFullYear();
+  let stmtMonth = null;
+  for (const line of lines) {
+    const m = line.match(/(\w+ \d{1,2},\s*\d{4})\s*through/i) || line.match(/(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},\s*(\d{4})/i);
+    if (m) {
+      const d = new Date(m[0].replace(/through.*/i,'').trim());
+      if (!isNaN(d)) { stmtYear = d.getFullYear(); stmtMonth = d.getMonth()+1; }
+      break;
     }
   }
 
-  return fullText;
+  function chaseDate(mm, dd) {
+    // Infer year: if month > stmtMonth → previous year
+    let yr = stmtYear;
+    if (stmtMonth && parseInt(mm) > stmtMonth) yr = stmtYear - 1;
+    return `${yr}-${String(mm).padStart(2,'0')}-${String(dd).padStart(2,'0')}`;
+  }
+
+  // Balance detection first pass
+  for (const line of lines) {
+    let m = line.match(BAL_BEGIN);
+    if (m) opening = parseFloat(m[1].replace(/,/g,''));
+    m = line.match(BAL_END);
+    if (m) closing = parseFloat(m[1].replace(/,/g,''));
+  }
+
+  // Main pass: section-aware
+  for (let i=0; i<lines.length; i++) {
+    const line = lines[i];
+
+    // Detect section changes
+    if (SEC_CR.test(line))  { section='credit'; continue; }
+    if (SEC_DR.test(line))  { section='debit';  continue; }
+    if (SEC_END.test(line)) { section='';       continue; }
+    if (!section)            continue;
+
+    // Skip header rows like "DATE  DESCRIPTION  AMOUNT"
+    if (/^date\s+desc/i.test(line) || /^total\s/i.test(line)) continue;
+
+    // Match date at start of line
+    const dm = line.match(DATE_RX);
+    if (!dm) {
+      // Might be a continuation description line — skip
+      continue;
+    }
+
+    const mm = dm[1], dd = dm[2];
+    const iso = chaseDate(mm, dd);
+
+    // Remove date from line → rest is "description  amount"
+    let rest = line.slice(dm[0].length).trim();
+
+    // Amount is the last number on the line
+    const amtMatch = rest.match(/([\d,]+\.\d{2})\s*$/);
+    if (!amtMatch) {
+      // Multi-line transaction: collect next lines until we find amount
+      let combined = rest;
+      for (let j=i+1; j<=Math.min(i+3, lines.length-1); j++) {
+        const nx = lines[j];
+        if (DATE_RX.test(nx) || SEC_CR.test(nx) || SEC_DR.test(nx)) break;
+        combined += ' ' + nx;
+        const am = combined.match(/([\d,]+\.\d{2})\s*$/);
+        if (am) { rest = combined; i=j; break; }
+      }
+    }
+
+    const finalAmtM = rest.match(/([\d,]+\.\d{2})\s*$/);
+    if (!finalAmtM) continue;
+
+    const amount = parseFloat(finalAmtM[1].replace(/,/g,''));
+    if (amount <= 0) continue;
+
+    // Description = everything before the amount
+    let desc = rest.slice(0, rest.lastIndexOf(finalAmtM[1])).trim();
+    if (!desc) desc = 'Transaction';
+
+    transactions.push({ date:iso, description:desc, type:section==='credit'?'Credit':'Debit', amount, category:'', catCls:'', source:fname });
+  }
+
+  return { transactions, opening, closing };
 }
 
-/* ================================================================
-   STATEMENT PARSER
-   Multi-pass regex approach:
-   1. Detect date-anchored transaction rows
-   2. Extract amount(s) and determine CR/DR
-   3. Capture opening/closing balances
-================================================================ */
-function parseStatement(text, filename) {
-  const lines        = text.split('\n').map(l=>l.trim()).filter(Boolean);
+/* ═══════════════════════════════════════════════════════════════
+   FIRST FIDELITY PARSER
+   This statement has:
+   Page 1: Summary table with Deposits + Checks Cleared (key data)
+   - "Deposits" section: Date | Description | Amount (right-aligned)
+   - "Electronic Credits": Date | Description | Amount
+   - "Checks Cleared": Check# | Date | Amount | Check# | Date | Amount
+   Format detected via OCR output from scanned pages.
+═══════════════════════════════════════════════════════════════ */
+function parseFirstFidelity(text, fname) {
+  const lines = text.split('\n').map(l=>l.trim()).filter(Boolean);
   const transactions = [];
-  let   opening=null, closing=null;
+  let opening = null, closing = null;
 
-  const AMT_RX   = /\b[\d,]+\.\d{2}\b/g;
-  const OPEN_RX  = /opening\s*bal|brought\s*fwd|b[\/\\]f\b|op\.?\s*bal|opening balance/i;
-  const CLOSE_RX = /closing\s*bal|carried\s*fwd|c[\/\\]f\b|cl\.?\s*bal|closing balance/i;
-  const CR_RX    = /\b(cr|credit|credited|deposit|dep|received|inward|reversal|refund|receipt)\b/i;
-  const DR_RX    = /\b(dr|debit|debited|withdraw|wdl|wd|paid|payment|purchase|outward|charge|fee|transfer out)\b/i;
-
-  // ── Date patterns ─────────────────────────────────────
-  const DP = [
-    { rx:/\b(\d{4})[\/\-](\d{2})[\/\-](\d{2})\b/,                                              fn:m=>`${m[1]}-${m[2]}-${m[3]}` },
-    { rx:/\b(\d{2})[\/\-](\d{2})[\/\-](\d{4})\b/,                                              fn:m=>+m[1]>12?`${m[3]}-${m[2]}-${m[1]}`:`${m[3]}-${m[1]}-${m[2]}` },
-    { rx:/\b(\d{1,2})[\s\-\.](Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*[\s\-\.](\d{4})\b/i, fn:m=>`${m[3]}-${mo(m[2])}-${m[1].padStart(2,'0')}` },
-    { rx:/\b(\d{2})(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)(\d{4})\b/i,                fn:m=>`${m[3]}-${mo(m[2])}-${m[1]}` },
-    { rx:/\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+(\d{1,2}),?\s+(\d{4})\b/i, fn:m=>`${m[3]}-${mo(m[1])}-${m[2].padStart(2,'0')}` },
-    // Nepali/compact: 2024.07.15
-    { rx:/\b(\d{4})\.(\d{2})\.(\d{2})\b/,                                                       fn:m=>`${m[1]}-${m[2]}-${m[3]}` },
-    // OCR sometimes gives: 01/07/2024 with spaces: 01 / 07 / 2024
-    { rx:/\b(\d{2})\s*[\/\-]\s*(\d{2})\s*[\/\-]\s*(\d{4})\b/,                                  fn:m=>+m[1]>12?`${m[3]}-${m[2]}-${m[1]}`:`${m[3]}-${m[1]}-${m[2]}` },
+  const AMT    = /\$([\d,]+\.\d{2})/g;
+  const AMT2   = /\b([\d,]+\.\d{2})\b/g;
+  const DATE_P = [
+    { rx:/\b(\d{2})\/(\d{2})\/(\d{4})\b/, fn:m=>`${m[3]}-${m[1]}-${m[2]}` },
+    { rx:/\b(\d{4})-(\d{2})-(\d{2})\b/,   fn:m=>`${m[1]}-${m[2]}-${m[3]}` },
   ];
 
-  function mo(s) {
-    return String({jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12}[s.slice(0,3).toLowerCase()]||1).padStart(2,'0');
-  }
-
   function findDate(line) {
-    for (const p of DP) { const m=line.match(p.rx); if(m) return {raw:m[0],iso:p.fn(m)}; }
+    for (const p of DATE_P) { const m=line.match(p.rx); if(m) return {raw:m[0],iso:p.fn(m)}; }
     return null;
   }
+  function toF(s){ return parseFloat(s.replace(/[$,]/g,''))||0; }
 
-  function toF(s) { return parseFloat((s||'0').replace(/,/g,''))||0; }
+  let section = '';
+  const SEC_DEP    = /^deposits?\s*$/i;
+  const SEC_ELEC   = /^electronic\s*credits?\s*$/i;
+  const SEC_CHECKS = /^checks?\s*cleared/i;
+  const SEC_DAILY  = /^daily\s*balance/i;
+  const SEC_OD     = /^overdraft/i;
 
-  // ── OCR noise cleanup ─────────────────────────────────
-  // OCR sometimes confuses chars: 0/O, 1/I/l, 5/S, etc.
-  // We fix amounts but leave descriptions as-is to avoid distortion.
-  function cleanOCRAmount(line) {
-    return line
-      .replace(/O/g,'0')   // O → 0 in number context handled via regex
-      .replace(/[lI]\./g,'1.')
-      .replace(/\s+/g,' ');
+  // Balance detection
+  for (const line of lines) {
+    if (/beginning\s*balance/i.test(line)) {
+      const a = [...line.matchAll(AMT)]; if(a.length) opening = toF(a[a.length-1][1]);
+    }
+    if (/ending\s*balance/i.test(line)) {
+      const a = [...line.matchAll(AMT)]; if(a.length) closing = toF(a[a.length-1][1]);
+    }
   }
 
-  // ── Main loop ──────────────────────────────────────────
+  // Main parse
   for (let i=0; i<lines.length; i++) {
-    const raw  = lines[i];
-    const line = raw; // keep original for description
+    const line = lines[i];
 
-    // Balance detection
-    if (OPEN_RX.test(line)) {
-      const a=line.match(AMT_RX); if(a) opening=toF(a[a.length-1]); continue;
-    }
-    if (CLOSE_RX.test(line)) {
-      const a=line.match(AMT_RX); if(a) closing=toF(a[a.length-1]); continue;
-    }
+    if (SEC_DEP.test(line))    { section='deposit';  continue; }
+    if (SEC_ELEC.test(line))   { section='elec';     continue; }
+    if (SEC_CHECKS.test(line)) { section='checks';   continue; }
+    if (SEC_DAILY.test(line) || SEC_OD.test(line)) { section=''; continue; }
 
-    const dateMatch=findDate(line);
-    if (!dateMatch) continue;
+    if (section==='deposit' || section==='elec') {
+      const dm = findDate(line);
+      if (!dm) continue;
+      const amts = [...line.matchAll(AMT)].map(m=>toF(m[1])).filter(v=>v>0);
+      if (!amts.length) {
+        // Amount might be on next line
+        const nx = lines[i+1]||'';
+        const na = [...nx.matchAll(AMT)].map(m=>toF(m[1])).filter(v=>v>0);
+        if (!na.length) continue;
+        amts.push(na[0]); i++;
+      }
+      let desc = line.replace(dm.raw,'').replace(AMT,'').trim() || (section==='elec'?'Electronic Credit':'Deposit');
+      transactions.push({ date:dm.iso, description:desc, type:'Credit', amount:amts[amts.length-1], category:'', catCls:'', source:fname });
 
-    const amounts=(line.match(AMT_RX)||[]).map(toF).filter(v=>v>0);
-    if (!amounts.length) continue;
+    } else if (section==='checks') {
+      // Checks Cleared: rows look like:  49405  07/22/2024  $13.17   49406  07/11/2024  $181.63
+      // Sometimes two checks per line
+      const dateMatches = [...line.matchAll(/\b(\d{2})\/(\d{2})\/(\d{4})\b/g)];
+      const amtMatches  = [...line.matchAll(/\$([\d,]+\.\d{2})/g)];
+      const chkMatches  = [...line.matchAll(/\b(\d{4,6})\b/g)];
 
-    // ── CR / DR detection ────────────────────────────────
-    let isCredit=null;
-    if (CR_RX.test(line)) isCredit=true;
-    if (DR_RX.test(line)) isCredit=false;
+      if (dateMatches.length === 0) continue;
 
-    // Lookahead
-    if (isCredit===null) {
-      for (let j=i+1;j<=Math.min(i+2,lines.length-1);j++) {
-        if (CR_RX.test(lines[j])) { isCredit=true; break; }
-        if (DR_RX.test(lines[j])) { isCredit=false; break; }
+      for (let k=0; k<dateMatches.length; k++) {
+        const dm  = dateMatches[k];
+        const amt = amtMatches[k];
+        if (!amt) continue;
+        const chk = chkMatches[k] ? chkMatches[k][1] : '?';
+        const iso = `${dm[3]}-${dm[1]}-${dm[2]}`;
+        transactions.push({ date:iso, description:`Check #${chk}`, type:'Debit', amount:toF(amt[1]), category:'', catCls:'', source:fname });
       }
     }
-    if (isCredit===null) isCredit=false;
-
-    // ── Amount selection ─────────────────────────────────
-    let amount=amounts[0];
-    if (amounts.length>=3) {
-      amount=isCredit ? amounts[1] : amounts[0];
-      if (amount===0) amount=amounts.find(v=>v>0)||0;
-    }
-    if (amount<=0) continue;
-
-    // ── Description ──────────────────────────────────────
-    let desc=line
-      .replace(dateMatch.raw,'')
-      .replace(AMT_RX,'')
-      .replace(/\b(CR|DR|Cr|Dr)\b/g,'')
-      .replace(/[|\t]/g,' ')
-      .replace(/\s{2,}/g,' ')
-      .trim();
-    if (!desc||desc.length<2) {
-      desc=(lines[i+1]||'Transaction').replace(AMT_RX,'').replace(/\s{2,}/g,' ').trim()||'Transaction';
-    }
-
-    transactions.push({
-      date:dateMatch.iso, description:desc,
-      type:isCredit?'Credit':'Debit', amount,
-      category:'', catCls:'', source:filename,
-    });
   }
 
-  // ── Fallback relaxed parser ───────────────────────────
-  if (transactions.length===0) {
-    log('   ↩ Trying relaxed parser…');
-    const fb=relaxedParse(lines,filename);
-    transactions.push(...fb);
+  // If very few transactions found (OCR noise), try generic
+  if (transactions.length < 3) {
+    logln('   ↩ First Fidelity parser got < 3 rows, trying generic…','warn');
+    const g = parseGeneric(text, fname);
+    return { transactions: g.transactions.length > transactions.length ? g.transactions : transactions, opening, closing };
   }
 
-  return {transactions, opening, closing};
+  return { transactions, opening, closing };
 }
 
-/* ================================================================
-   RELAXED PARSER  (fallback for unusual / noisy OCR output)
-================================================================ */
-function relaxedParse(lines, filename) {
-  const results=[];
-  const AMT_RX =/\b[\d,]+\.\d{2}\b/g;
-  const DATE_RX=/\b(\d{4}[\/\-\.]\d{2}[\/\-\.]\d{2}|\d{2}[\/\-]\d{2}[\/\-]\d{4}|\d{1,2}[\s\-](?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*[\s\-]\d{4})\b/i;
+/* ═══════════════════════════════════════════════════════════════
+   GENERIC PARSER
+   Handles any date-anchored statement format.
+   Strategy: find lines with a date AND at least one amount;
+   determine CR/DR from context words.
+═══════════════════════════════════════════════════════════════ */
+function parseGeneric(text, fname) {
+  const lines = text.split('\n').map(l=>l.trim()).filter(Boolean);
+  const transactions = [];
+  let opening = null, closing = null;
 
-  for (let i=0;i<lines.length;i++) {
-    const dm=lines[i].match(DATE_RX);
+  const AMT_RX  = /\b[\d,]+\.\d{2}\b/g;
+  const OPEN_RX = /opening\s*bal|beginning\s*bal|brought\s*fwd|b[\/]f\b/i;
+  const CLOS_RX = /closing\s*bal|ending\s*bal|carried\s*fwd|c[\/]f\b/i;
+  const CR_RX   = /\b(cr|credit|credited|deposit|received|inward|reversal|refund|addition)\b/i;
+  const DR_RX   = /\b(dr|debit|debited|withdraw|paid|payment|purchase|charge|fee|withdrawal)\b/i;
+
+  const DATE_P = [
+    { rx:/\b(\d{4})[\/\-](\d{2})[\/\-](\d{2})\b/,  fn:m=>`${m[1]}-${m[2]}-${m[3]}` },
+    { rx:/\b(\d{2})[\/\-](\d{2})[\/\-](\d{4})\b/,  fn:m=>+m[1]>12?`${m[3]}-${m[2]}-${m[1]}`:`${m[3]}-${m[1]}-${m[2]}` },
+    { rx:/\b(\d{1,2})[\s\-](Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*[\s\-](\d{4})\b/i, fn:m=>`${m[3]}-${mo(m[2])}-${m[1].padStart(2,'0')}` },
+    { rx:/\b(\d{2})(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)(\d{4})\b/i, fn:m=>`${m[3]}-${mo(m[2])}-${m[1]}` },
+  ];
+  function mo(s){ return String({jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12}[s.slice(0,3).toLowerCase()]||1).padStart(2,'0'); }
+  function findDate(line){ for(const p of DATE_P){const m=line.match(p.rx);if(m)return{raw:m[0],iso:p.fn(m)};} return null; }
+  function toF(s){ return parseFloat(s.replace(/,/g,''))||0; }
+
+  for (const line of lines) {
+    if (OPEN_RX.test(line)){ const a=line.match(AMT_RX); if(a) opening=toF(a[a.length-1]); }
+    if (CLOS_RX.test(line)){ const a=line.match(AMT_RX); if(a) closing=toF(a[a.length-1]); }
+  }
+
+  for (let i=0; i<lines.length; i++) {
+    const line = lines[i];
+    const dm = findDate(line);
     if (!dm) continue;
-    const ctx=[lines[i],lines[i+1]||'',lines[i+2]||''].join(' ');
-    const amts=(ctx.match(AMT_RX)||[]).map(s=>parseFloat(s.replace(/,/g,''))).filter(v=>v>0);
+    const amts = (line.match(AMT_RX)||[]).map(toF).filter(v=>v>0);
     if (!amts.length) continue;
-    const isCredit=/\b(cr|credit|deposit|received|reversal|refund)\b/i.test(ctx);
-    const desc=lines[i].replace(dm[0],'').replace(AMT_RX,'').replace(/\s{2,}/g,' ').trim()||'Transaction';
-    results.push({date:dm[0],description:desc,type:isCredit?'Credit':'Debit',amount:amts[0],category:'',catCls:'',source:filename});
-    i++;
-  }
-  return results;
-}
 
-/* ================================================================
-   STATS + VALIDATION
-================================================================ */
-function renderStats(balInfo) {
-  const credits=allTransactions.filter(t=>t.type==='Credit').reduce((s,t)=>s+t.amount,0);
-  const debits =allTransactions.filter(t=>t.type==='Debit').reduce((s,t)=>s+t.amount,0);
-  const net    =credits-debits;
-
-  document.getElementById('s-cnt').textContent=allTransactions.length;
-  document.getElementById('s-cr').textContent =fmt(credits);
-  document.getElementById('s-dr').textContent =fmt(debits);
-  const ne=document.getElementById('s-net');
-  ne.textContent=fmt(Math.abs(net));
-  ne.className='stat-v '+(net>=0?'cr':'dr');
-
-  const vb=document.getElementById('v-banner');
-  let html='';
-
-  if (!allTransactions.length) {
-    html=`<div class="banner err"><span class="b-icon">❌</span><div>
-      <strong>No transactions found.</strong> The PDF text could not be parsed into transactions.
-      Try switching to <strong>Force OCR</strong> mode, or share your bank name so we can tune the parser.
-    </div></div>`;
-  } else {
-    let mis='';
-    for (const [fn,b] of Object.entries(balInfo||{})) {
-      if (b.opening!==null&&b.closing!==null) {
-        const exp=parseFloat((b.opening+credits-debits).toFixed(2));
-        const act=parseFloat(b.closing.toFixed(2));
-        const diff=Math.abs(exp-act);
-        if (diff>1) mis+=`<div><strong>${esc(fn)}</strong>: expected closing ${fmt(exp)}, found ${fmt(act)} (Δ ${fmt(diff)})</div>`;
-      }
+    let isCredit = null;
+    if (CR_RX.test(line)) isCredit = true;
+    if (DR_RX.test(line)) isCredit = false;
+    if (isCredit===null) {
+      const ctx = (lines[i+1]||'')+(lines[i+2]||'');
+      if (CR_RX.test(ctx)) isCredit = true;
+      else if (DR_RX.test(ctx)) isCredit = false;
+      else isCredit = false;
     }
-    if (mis) html=`<div class="banner warn"><span class="b-icon">⚠️</span><div><strong>Balance mismatch detected.</strong><br>${mis}</div></div>`;
-    else if (Object.keys(balInfo||{}).length) html=`<div class="banner ok"><span class="b-icon">✅</span><div>Balance validation passed — Opening + Credits − Debits = Closing.</div></div>`;
-    else html=`<div class="banner warn"><span class="b-icon">ℹ️</span><div>Opening/closing balance not detected — please verify totals manually.</div></div>`;
+
+    let amount = amts[0];
+    if (amts.length >= 3) { amount = isCredit ? amts[1] : amts[0]; if(!amount) amount=amts[0]; }
+
+    let desc = line.replace(dm.raw,'').replace(AMT_RX,'').replace(/\b(CR|DR|Cr|Dr)\b/g,'').replace(/[|\t]/g,' ').replace(/\s{2,}/g,' ').trim();
+    if (!desc || desc.length<2) desc = 'Transaction';
+
+    transactions.push({ date:dm.iso, description:desc, type:isCredit?'Credit':'Debit', amount, category:'', catCls:'', source:fname });
   }
-  vb.innerHTML=html;
+
+  return { transactions, opening, closing };
 }
 
-/* ================================================================
+/* ═══════════════════════════════════════════════════════════════
+   STATS & VALIDATION
+═══════════════════════════════════════════════════════════════ */
+function renderStats(balances) {
+  const credits = allTransactions.filter(t=>t.type==='Credit').reduce((s,t)=>s+t.amount,0);
+  const debits  = allTransactions.filter(t=>t.type==='Debit').reduce((s,t)=>s+t.amount,0);
+  const net     = credits - debits;
+
+  document.getElementById('s-cnt').textContent = allTransactions.length;
+  document.getElementById('s-cr').textContent  = fmt(credits);
+  document.getElementById('s-dr').textContent  = fmt(debits);
+  const ne = document.getElementById('s-net');
+  ne.textContent = fmt(Math.abs(net));
+  ne.className   = 'sum-val '+(net>=0?'cr':'dr');
+
+  const vb = document.getElementById('v-banner');
+  if (!allTransactions.length) {
+    vb.innerHTML = `<div class="banner err"><span class="banner-icon">❌</span><div><strong>No transactions extracted.</strong> Try switching the file to OCR mode by clearing and re-uploading.</div></div>`;
+    return;
+  }
+
+  let mis = '';
+  for (const [fn, b] of Object.entries(balances||{})) {
+    if (b.opening!==null && b.closing!==null) {
+      const exp  = parseFloat((b.opening + credits - debits).toFixed(2));
+      const act  = parseFloat(b.closing.toFixed(2));
+      const diff = Math.abs(exp-act);
+      if (diff > 1) mis += `<div>${esc(fn)}: expected ${fmt(exp)}, found ${fmt(act)} (Δ ${fmt(diff)})</div>`;
+    }
+  }
+  if (mis) vb.innerHTML = `<div class="banner warn"><span class="banner-icon">⚠️</span><div><strong>Balance mismatch.</strong> ${mis}</div></div>`;
+  else if (Object.keys(balances||{}).length) vb.innerHTML = `<div class="banner ok"><span class="banner-icon">✅</span><div>Balance validation passed.</div></div>`;
+  else vb.innerHTML = `<div class="banner warn"><span class="banner-icon">ℹ️</span><div>Opening/closing balance not detected — verify manually.</div></div>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════
    TABLE
-================================================================ */
+═══════════════════════════════════════════════════════════════ */
 function renderTable(data) {
-  const rows=data||allTransactions;
-  document.getElementById('rc').textContent=rows.length+' rows';
-  document.getElementById('tbody').innerHTML=rows.map((t,i)=>`
-    <tr>
-      <td style="color:var(--ink-lt);font-size:11.5px">${i+1}</td>
-      <td class="mono">${esc(t.date||'—')}</td>
-      <td class="desc-c" title="${esc(t.description)}">${esc(t.description)}</td>
-      <td><span class="badge ${t.type==='Credit'?'b-cr':'b-dr'}">${t.type==='Credit'?'CR':'DR'}</span></td>
-      <td class="mono ${t.type==='Credit'?'cr-t':'dr-t'}">${t.type==='Credit'?'+':'-'}${fmt(t.amount)}</td>
-      <td><span class="badge ${t.catCls}">${esc(t.category)}</span></td>
-    </tr>`).join('');
+  const rows = data || allTransactions;
+  document.getElementById('tbl-count').textContent = rows.length + ' rows';
+  document.getElementById('tbody').innerHTML = rows.length === 0
+    ? `<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--ink3);">No transactions match your filters.</td></tr>`
+    : rows.map((t,i) => `
+      <tr>
+        <td style="color:var(--ink3);font-size:11px">${i+1}</td>
+        <td class="mono">${esc(t.date||'—')}</td>
+        <td class="desc-td" title="${esc(t.description)}">${esc(t.description)}</td>
+        <td><span class="badge ${t.type==='Credit'?'b-cr':'b-dr'}">${t.type==='Credit'?'CR':'DR'}</span></td>
+        <td class="mono ${t.type==='Credit'?'cr-t':'dr-t'}">${t.type==='Credit'?'+':'-'}${fmt(t.amount)}</td>
+        <td><span class="badge ${t.catCls}">${esc(t.category)}</span></td>
+        <td style="font-size:11px;color:var(--ink3);max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(t.source)}">${esc(t.source)}</td>
+      </tr>`).join('');
 }
 
 function filterTable() {
-  const q=document.getElementById('s-inp').value.toLowerCase();
-  const type=document.getElementById('f-type').value;
-  const cat=document.getElementById('f-cat').value;
-  renderTable(allTransactions.filter(t=>{
-    if (type&&t.type!==type) return false;
-    if (cat&&t.category!==cat) return false;
-    if (q&&!(t.date+' '+t.description+' '+t.amount+' '+t.category).toLowerCase().includes(q)) return false;
+  const q    = document.getElementById('s-inp').value.toLowerCase();
+  const type = document.getElementById('f-type').value;
+  const cat  = document.getElementById('f-cat').value;
+  renderTable(allTransactions.filter(t => {
+    if (type && t.type!==type) return false;
+    if (cat  && t.category!==cat) return false;
+    if (q && !(t.date+' '+t.description+' '+t.amount+' '+t.category).toLowerCase().includes(q)) return false;
     return true;
   }));
 }
 
-/* ================================================================
+/* ═══════════════════════════════════════════════════════════════
    EXCEL EXPORT
-================================================================ */
+═══════════════════════════════════════════════════════════════ */
 function downloadExcel() {
-  if (!allTransactions.length) { toast('No transactions to export.','t-warn'); return; }
-  const wb=XLSX.utils.book_new();
+  if (!allTransactions.length) { toast('No transactions to export.','warn'); return; }
 
-  const ws1=XLSX.utils.aoa_to_sheet([
+  const wb  = XLSX.utils.book_new();
+
+  // Sheet 1: Transactions
+  const ws1 = XLSX.utils.aoa_to_sheet([
     ['Date','Description','Type','Amount','Category','Source File'],
-    ...allTransactions.map(t=>[t.date,t.description,t.type,t.type==='Credit'?t.amount:-t.amount,t.category,t.source])
+    ...allTransactions.map(t=>[
+      t.date, t.description, t.type,
+      t.type==='Credit' ? t.amount : -t.amount,
+      t.category, t.source
+    ])
   ]);
-  ws1['!cols']=[{wch:14},{wch:50},{wch:10},{wch:16},{wch:18},{wch:30}];
-  XLSX.utils.book_append_sheet(wb,ws1,'Transactions');
+  ws1['!cols'] = [{wch:14},{wch:52},{wch:10},{wch:16},{wch:18},{wch:30}];
+  XLSX.utils.book_append_sheet(wb, ws1, 'Transactions');
 
-  const credits=allTransactions.filter(t=>t.type==='Credit').reduce((s,t)=>s+t.amount,0);
-  const debits =allTransactions.filter(t=>t.type==='Debit').reduce((s,t)=>s+t.amount,0);
-  const ws2=XLSX.utils.aoa_to_sheet([
-    ['Metric','Value'],
-    ['Total Transactions',allTransactions.length],
-    ['Total Credits',credits],['Total Debits',debits],['Net (CR−DR)',credits-debits],
-    [],
-    ['Category','Net Amount'],
-    ...CATS.map(c=>[c.label,allTransactions.filter(t=>t.category===c.label).reduce((s,t)=>s+(t.type==='Credit'?t.amount:-t.amount),0)])
+  // Sheet 2: Summary
+  const credits = allTransactions.filter(t=>t.type==='Credit').reduce((s,t)=>s+t.amount,0);
+  const debits  = allTransactions.filter(t=>t.type==='Debit').reduce((s,t)=>s+t.amount,0);
+  const ws2 = XLSX.utils.aoa_to_sheet([
+    ['Summary',''],
+    ['Total Transactions', allTransactions.length],
+    ['Total Credits', credits],
+    ['Total Debits',  debits],
+    ['Net (CR − DR)', credits - debits],
+    ['',''],
+    ['Category Breakdown','Net Amount'],
+    ...CATS.map(c=>[c.label, allTransactions.filter(t=>t.category===c.label).reduce((s,t)=>s+(t.type==='Credit'?t.amount:-t.amount),0)])
   ]);
-  ws2['!cols']=[{wch:28},{wch:18}];
-  XLSX.utils.book_append_sheet(wb,ws2,'Summary');
+  ws2['!cols'] = [{wch:26},{wch:18}];
+  XLSX.utils.book_append_sheet(wb, ws2, 'Summary');
 
-  XLSX.writeFile(wb,'transactions_'+new Date().toISOString().slice(0,10)+'.xlsx');
-  toast('Excel downloaded!','t-ok');
+  // Sheet 3: By Source
+  const sources = [...new Set(allTransactions.map(t=>t.source))];
+  const ws3rows = [['Source File','Transactions','Credits','Debits','Net']];
+  for (const src of sources) {
+    const rows = allTransactions.filter(t=>t.source===src);
+    const cr   = rows.filter(t=>t.type==='Credit').reduce((s,t)=>s+t.amount,0);
+    const dr   = rows.filter(t=>t.type==='Debit').reduce((s,t)=>s+t.amount,0);
+    ws3rows.push([src, rows.length, cr, dr, cr-dr]);
+  }
+  const ws3 = XLSX.utils.aoa_to_sheet(ws3rows);
+  ws3['!cols'] = [{wch:35},{wch:14},{wch:14},{wch:14},{wch:14}];
+  XLSX.utils.book_append_sheet(wb, ws3, 'By File');
+
+  XLSX.writeFile(wb, 'transactions_' + new Date().toISOString().slice(0,10) + '.xlsx');
+  toast('Excel downloaded successfully!','ok');
 }
 
-/* ================================================================
+/* ═══════════════════════════════════════════════════════════════
    HELPERS
-================================================================ */
-function show(id){ document.getElementById(id).style.display=''; }
-
-function setProgress(pct, label, sub) {
-  if (pct!==null) document.getElementById('prog-bar').style.width=pct+'%';
-  if (label!==null) document.getElementById('prog-lbl').textContent=label;
-  if (sub!==null) document.getElementById('prog-sub').textContent=sub||'';
+═══════════════════════════════════════════════════════════════ */
+function setP(pct, label, sub) {
+  if (pct!==null)   { document.getElementById('prog-bar').style.width = pct+'%'; document.getElementById('prog-pct').textContent = pct+'%'; }
+  if (label!==null)  document.getElementById('prog-lbl').textContent  = label;
+  if (sub!==null)    document.getElementById('prog-sub').textContent  = sub||'';
 }
 
-function log(msg) {
-  const box=document.getElementById('log');
-  box.innerHTML+=esc(msg)+'<br>';
-  box.scrollTop=box.scrollHeight;
+function logln(html, cls='') {
+  const box = document.getElementById('log');
+  const span = document.createElement('div');
+  span.className = cls ? 'log-'+cls : '';
+  span.innerHTML = html;
+  box.appendChild(span);
+  box.scrollTop = box.scrollHeight;
 }
 
 function fmt(n){ return Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
 
-function toast(msg,cls) {
-  const icons={'t-err':'❌','t-ok':'✅','t-warn':'⚠️'};
-  const el=document.createElement('div');
-  el.className='toast '+cls;
-  el.innerHTML=`<span>${icons[cls]||'ℹ️'}</span><span style="flex:1">${esc(msg)}</span><button class="t-x" onclick="this.parentElement.remove()">×</button>`;
+function toast(msg, type='info') {
+  const icons = {ok:'✅',err:'❌',warn:'⚠️',info:'ℹ️'};
+  const el = document.createElement('div');
+  el.className = 'toast '+(type||'');
+  el.innerHTML = `<span>${icons[type]||'ℹ️'}</span><span style="flex:1">${esc(msg)}</span><button class="t-x" onclick="this.parentElement.remove()">×</button>`;
   document.getElementById('toasts').appendChild(el);
-  setTimeout(()=>el.parentElement&&el.remove(),8000);
+  setTimeout(()=>el.parentElement&&el.remove(), 7000);
 }
 
-document.addEventListener('dragover',e=>e.preventDefault());
-document.addEventListener('drop',e=>{ e.preventDefault(); addFiles([...e.dataTransfer.files]); });
+document.addEventListener('dragover', e=>e.preventDefault());
+document.addEventListener('drop', e=>{ e.preventDefault(); addFiles([...e.dataTransfer.files]); });
 </script>
 </body>
 </html>
