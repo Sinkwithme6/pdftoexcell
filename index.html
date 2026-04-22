@@ -20,40 +20,33 @@
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;font-size:14px;}
-
 .hdr{background:linear-gradient(135deg,#1e3a8a 0%,#2563eb 100%);padding:0 24px;box-shadow:0 2px 12px rgba(37,99,235,.4);}
 .hdr-in{max-width:1200px;margin:0 auto;display:flex;align-items:center;gap:14px;height:62px;}
 .hdr-logo{font-size:26px;}
 .hdr h1{font-size:18px;font-weight:700;color:#fff;}
 .hdr p{font-size:12px;color:rgba(255,255,255,.7);margin-top:1px;}
 .hdr-pill{margin-left:auto;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);border-radius:20px;padding:4px 14px;font-size:11.5px;font-weight:600;color:#fff;}
-
 .main{max-width:1200px;margin:0 auto;padding:24px 20px 80px;display:grid;grid-template-columns:340px 1fr;gap:20px;align-items:start;}
 @media(max-width:800px){.main{grid-template-columns:1fr;}}
-
 .panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;}
 .panel-hdr{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;}
 .panel-hdr h2{font-size:13px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.6px;}
 .panel-body{padding:18px;}
-
 #dz{border:2px dashed #c7d7fa;border-radius:var(--rs);background:#f5f8ff;padding:32px 16px;text-align:center;cursor:pointer;transition:all .18s;position:relative;}
 #dz:hover,#dz.over{border-color:var(--blue);background:#eff6ff;}
 #dz input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;}
 .dz-ico{font-size:36px;display:block;margin-bottom:8px;}
 .dz-t{font-size:14px;font-weight:600;color:var(--blue);margin-bottom:3px;}
 .dz-s{font-size:12px;color:var(--ink3);}
-
 #chips{margin-top:12px;display:flex;flex-direction:column;gap:6px;}
 .chip{display:flex;align-items:center;gap:8px;background:#f5f8ff;border:1px solid #dbeafe;border-radius:var(--rs);padding:8px 10px;font-size:12.5px;animation:pin .2s ease;}
 @keyframes pin{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:translateY(0);}}
 .chip-name{flex:1;font-weight:500;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.chip-size{font-size:11px;color:var(--ink3);}
 .chip-rm{background:none;border:none;cursor:pointer;font-size:16px;color:#93c5fd;transition:color .1s;padding:0 2px;}
 .chip-rm:hover{color:var(--red);}
 .chip-mode{font-size:10px;font-weight:700;border-radius:10px;padding:2px 7px;background:#dbeafe;color:#1e40af;cursor:pointer;user-select:none;transition:all .15s;}
 .chip-mode:hover{opacity:.8;}
 .chip-mode.ocr{background:#fef3c7;color:#92400e;}
-
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;border:none;border-radius:var(--rs);font-weight:600;cursor:pointer;transition:all .15s;font-size:14px;}
 .btn-primary{background:var(--blue);color:#fff;padding:11px 20px;width:100%;box-shadow:0 2px 8px rgba(37,99,235,.35);}
 .btn-primary:hover:not(:disabled){background:var(--blue-dk);transform:translateY(-1px);}
@@ -63,31 +56,24 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--i
 .btn-dl{background:var(--green);color:#fff;padding:12px 24px;font-size:15px;font-weight:700;box-shadow:0 2px 10px rgba(5,150,105,.35);}
 .btn-dl:hover{background:#047857;transform:translateY(-1px);}
 .btn-dl:disabled{opacity:.35;cursor:not-allowed;transform:none;}
-
 #prog-box{display:none;margin-top:16px;}
 .prog-label{font-size:12.5px;color:var(--ink2);margin-bottom:6px;display:flex;justify-content:space-between;}
 .prog-track{height:8px;background:#dbeafe;border-radius:20px;overflow:hidden;}
 .prog-fill{height:100%;background:linear-gradient(90deg,#2563eb,#60a5fa);border-radius:20px;transition:width .4s ease;width:0%;}
 .prog-sub{font-size:11.5px;color:var(--ink3);margin-top:5px;}
-
-#log{display:none;margin-top:12px;background:#f8fafc;border:1px solid var(--border);border-radius:var(--rs);padding:10px 12px;max-height:160px;overflow-y:auto;font-size:11.5px;font-family:'JetBrains Mono',monospace;color:var(--ink2);line-height:1.8;}
+#log{display:none;margin-top:12px;background:#f8fafc;border:1px solid var(--border);border-radius:var(--rs);padding:10px 12px;max-height:200px;overflow-y:auto;font-size:11.5px;font-family:'JetBrains Mono',monospace;color:var(--ink2);line-height:1.8;}
 .log-ok{color:#059669;}.log-warn{color:#d97706;}.log-err{color:#dc2626;}
-
 .results-wrap{display:flex;flex-direction:column;gap:16px;}
 .sum-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
 .sum-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);padding:14px 16px;}
 .sum-lbl{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--ink3);margin-bottom:4px;}
 .sum-val{font-size:20px;font-weight:700;font-family:'JetBrains Mono',monospace;}
-.sum-val.cr{color:var(--green);}
-.sum-val.dr{color:var(--red);}
-.sum-val.nt{color:var(--ink);}
-
+.sum-val.cr{color:var(--green);}.sum-val.dr{color:var(--red);}.sum-val.nt{color:var(--ink);}
 .banner{border-radius:var(--rs);padding:11px 14px;display:flex;align-items:flex-start;gap:9px;font-size:13px;}
 .banner.ok{background:var(--green-lt);border:1px solid #6ee7b7;color:#065f46;}
 .banner.warn{background:var(--amber-lt);border:1px solid #fcd34d;color:#78350f;}
 .banner.err{background:var(--red-lt);border:1px solid #fca5a5;color:#991b1b;}
 .banner-icon{flex-shrink:0;font-size:16px;margin-top:1px;}
-
 .tbl-panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;}
 .tbl-toolbar{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap;align-items:center;background:#fafbff;}
 .s-inp{flex:1;min-width:160px;border:1px solid var(--border);border-radius:var(--rs);padding:7px 12px;font-size:13px;outline:none;font-family:inherit;}
@@ -102,61 +88,39 @@ tbody tr{border-bottom:1px solid #f3f4f8;transition:background .08s;}
 tbody tr:hover{background:#f8faff;}
 tbody td{padding:8px 14px;vertical-align:middle;}
 .mono{font-family:'JetBrains Mono',monospace;font-size:12px;}
-.cr-t{color:var(--green);font-weight:600;}
-.dr-t{color:var(--red);font-weight:600;}
+.cr-t{color:var(--green);font-weight:600;}.dr-t{color:var(--red);font-weight:600;}
 .badge{display:inline-block;border-radius:10px;padding:2px 9px;font-size:11px;font-weight:600;}
-.b-salary{background:#d1fae5;color:#065f46;}
-.b-rent{background:#fee2e2;color:#991b1b;}
-.b-util{background:#fef3c7;color:#92400e;}
-.b-dep{background:#dbeafe;color:#1e40af;}
-.b-trf{background:#ede9fe;color:#5b21b6;}
-.b-food{background:#fce7f3;color:#9d174d;}
-.b-fuel{background:#fff7ed;color:#9a3412;}
-.b-misc{background:#f3f4f6;color:#4b5563;}
-.b-cr{background:#d1fae5;color:#065f46;}
-.b-dr{background:#fee2e2;color:#991b1b;}
+.b-salary{background:#d1fae5;color:#065f46;}.b-rent{background:#fee2e2;color:#991b1b;}
+.b-util{background:#fef3c7;color:#92400e;}.b-dep{background:#dbeafe;color:#1e40af;}
+.b-trf{background:#ede9fe;color:#5b21b6;}.b-food{background:#fce7f3;color:#9d174d;}
+.b-fuel{background:#fff7ed;color:#9a3412;}.b-misc{background:#f3f4f6;color:#4b5563;}
+.b-cr{background:#d1fae5;color:#065f46;}.b-dr{background:#fee2e2;color:#991b1b;}
 .desc-td{max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-
 #toasts{position:fixed;bottom:24px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px;width:320px;}
 .toast{background:var(--surface);border-radius:var(--rs);border-left:4px solid var(--blue);box-shadow:0 4px 20px rgba(0,0,0,.13);padding:12px 14px;font-size:13px;display:flex;align-items:center;gap:9px;animation:tin .22s ease;}
 @keyframes tin{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
-.toast.ok{border-color:var(--green);}
-.toast.err{border-color:var(--red);}
-.toast.warn{border-color:var(--amber);}
-.t-x{margin-left:auto;background:none;border:none;cursor:pointer;font-size:17px;opacity:.4;}
-.t-x:hover{opacity:.9;}
-
+.toast.ok{border-color:var(--green);}.toast.err{border-color:var(--red);}.toast.warn{border-color:var(--amber);}
+.t-x{margin-left:auto;background:none;border:none;cursor:pointer;font-size:17px;opacity:.4;}.t-x:hover{opacity:.9;}
 .spin{display:inline-block;width:15px;height:15px;border:2.5px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:sp .65s linear infinite;}
 @keyframes sp{to{transform:rotate(360deg);}}
-
 .empty{padding:48px 24px;text-align:center;color:var(--ink3);}
-.empty-icon{font-size:40px;display:block;margin-bottom:10px;}
-.empty p{font-size:14px;}
-
+.empty-icon{font-size:40px;display:block;margin-bottom:10px;}.empty p{font-size:14px;}
 .sec{font-size:11.5px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--ink3);margin-bottom:10px;display:flex;align-items:center;gap:8px;}
 .sec::after{content:'';flex:1;height:1px;background:var(--border);}
-
 .mode-hint{font-size:11px;color:var(--ink3);margin-top:6px;padding:6px 10px;background:#fffbeb;border:1px solid #fde68a;border-radius:var(--rs);}
 </style>
 </head>
 <body>
-
 <header class="hdr">
   <div class="hdr-in">
     <span class="hdr-logo">🏦</span>
-    <div>
-      <h1>Bank Transaction Extractor</h1>
-      <p>Supports Chase, First Fidelity, Nepali banks &amp; more · Digital + Scanned PDFs</p>
-    </div>
+    <div><h1>Bank Transaction Extractor</h1><p>Chase · First Fidelity · Nepali banks &amp; more · Digital + Scanned PDFs</p></div>
     <span class="hdr-pill">100% Local · No Cloud</span>
   </div>
 </header>
-
 <div id="toasts"></div>
-
 <div class="main">
   <div style="display:flex;flex-direction:column;gap:14px;">
-
     <div class="panel">
       <div class="panel-hdr"><h2>📂 Upload PDFs</h2></div>
       <div class="panel-body">
@@ -167,11 +131,9 @@ tbody td{padding:8px 14px;vertical-align:middle;}
           <div class="dz-s">Up to 12 files · digital or scanned</div>
         </div>
         <div id="chips"></div>
-        <div class="mode-hint" id="mode-hint" style="display:none;">💡 <strong>Click the mode badge</strong> (Digital/OCR) on any file to toggle it manually if auto-detection is wrong.</div>
+        <div class="mode-hint" id="mode-hint" style="display:none;">💡 Click the <strong>Digital/OCR</strong> badge to toggle mode if auto-detection seems wrong.</div>
         <div style="margin-top:14px;">
-          <button class="btn btn-primary" id="btn-go" disabled>
-            <span id="btn-lbl">⚙ Extract Transactions</span>
-          </button>
+          <button class="btn btn-primary" id="btn-go" disabled><span id="btn-lbl">⚙ Extract Transactions</span></button>
           <button class="btn btn-ghost" onclick="clearAll()">✕ Clear All</button>
         </div>
         <div id="prog-box">
@@ -182,22 +144,17 @@ tbody td{padding:8px 14px;vertical-align:middle;}
         <div id="log"></div>
       </div>
     </div>
-
     <div class="panel">
       <div class="panel-hdr"><h2>📥 Download Excel</h2></div>
       <div class="panel-body">
-        <p style="font-size:12.5px;color:var(--ink2);margin-bottom:12px;">After extraction, download your transactions as a formatted <strong>.xlsx</strong> file with Transactions + Summary sheets.</p>
-        <button class="btn btn-dl" id="btn-dl" onclick="downloadExcel()" disabled>
-          📥 Download Excel (.xlsx)
-        </button>
+        <p style="font-size:12.5px;color:var(--ink2);margin-bottom:12px;">Download extracted transactions as a formatted <strong>.xlsx</strong> with Transactions + Summary sheets.</p>
+        <button class="btn btn-dl" id="btn-dl" onclick="downloadExcel()" disabled>📥 Download Excel (.xlsx)</button>
         <div id="dl-info" style="margin-top:10px;font-size:12px;color:var(--ink3);display:none;"></div>
       </div>
     </div>
-
   </div>
 
   <div class="results-wrap">
-
     <div id="stats-wrap" style="display:none;">
       <div class="sec">Summary</div>
       <div class="sum-grid">
@@ -208,15 +165,13 @@ tbody td{padding:8px 14px;vertical-align:middle;}
       </div>
       <div id="v-banner" style="margin-top:10px;"></div>
     </div>
-
     <div id="tbl-wrap" style="display:none;">
       <div class="sec">Extracted Transactions</div>
       <div class="tbl-panel">
         <div class="tbl-toolbar">
           <input class="s-inp" id="s-inp" placeholder="🔍 Search description, date, amount…" oninput="filterTable()"/>
           <select class="s-sel" id="f-type" onchange="filterTable()">
-            <option value="">All Types</option>
-            <option>Credit</option><option>Debit</option>
+            <option value="">All Types</option><option>Credit</option><option>Debit</option>
           </select>
           <select class="s-sel" id="f-cat" onchange="filterTable()">
             <option value="">All Categories</option>
@@ -234,42 +189,34 @@ tbody td{padding:8px 14px;vertical-align:middle;}
         </div>
       </div>
     </div>
-
     <div id="empty-state" class="panel">
-      <div class="empty">
-        <span class="empty-icon">📊</span>
-        <p>Upload one or more bank statement PDFs and click<br><strong>Extract Transactions</strong> to get started.</p>
-      </div>
+      <div class="empty"><span class="empty-icon">📊</span><p>Upload one or more bank statement PDFs and click<br><strong>Extract Transactions</strong> to get started.</p></div>
     </div>
-
   </div>
 </div>
 
 <script>
-/* ═══════════════════════════════════════════════════════════════
-   PDF.js SETUP
-═══════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════
+   PDF.js
+═══════════════════════════════════════ */
 pdfjsLib.GlobalWorkerOptions.workerSrc =
   'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
-/* ═══════════════════════════════════════════════════════════════
-   STATE
-═══════════════════════════════════════════════════════════════ */
 const MAX_FILES = 12;
 let selectedFiles   = [];
 let allTransactions = [];
 
-/* ═══════════════════════════════════════════════════════════════
-   CATEGORY RULES
-═══════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════
+   CATEGORIES
+═══════════════════════════════════════ */
 const CATS = [
   { label:'Salary',    cls:'b-salary', kw:['salary','payroll','wages','pay slip','direct dep','direct deposit','income','stipend','bonus','commission'] },
   { label:'Rent',      cls:'b-rent',   kw:['rent','lease','landlord','housing','apartment'] },
   { label:'Utilities', cls:'b-util',   kw:['electric','water bill','gas bill','internet','broadband','utility','telecom','telephone','mobile','wifi','cable tv','nea','kukl','worldlink','vianet','pg&e','atmos','comcast','xfinity'] },
-  { label:'Deposit',   cls:'b-dep',    kw:['deposit','zelle payment from','atm check dep','atm cash dep','ach deposit','venmo','cash dep','real time transfer recd'] },
-  { label:'Transfer',  cls:'b-trf',    kw:['transfer','zelle payment to','wire','ach','neft','rtgs','imps','upi','fonepay','esewa','khalti','online transfer','realtime transfer'] },
-  { label:'Food',      cls:'b-food',   kw:['restaurant','cafe','coffee','dining','grocery','supermarket','swiggy','zomato','canteen','bakery','mcdonald','taco bell','subway','chipotle','doordash','grubhub','whole foods','ralphs','target','walmart','ralph','7-eleven','in-n-out','jon don','del taco','enchilada','liquor','starbucks','carls jr','carl\'s jr'] },
-  { label:'Fuel',      cls:'b-fuel',   kw:['arco','chevron','shell','mobil','exxon','bp','fuel','gasoline','gas station','ampm','circle k','76 gas'] },
+  { label:'Deposit',   cls:'b-dep',    kw:['atm check deposit','atm cash deposit','cash deposit','atm check dep','atm cash dep','zelle payment from','ach deposit','venmo','real time transfer recd','realtime transfer recd'] },
+  { label:'Transfer',  cls:'b-trf',    kw:['zelle payment to','wire transfer','online transfer','online realtime transfer','neft','rtgs','imps','upi','fonepay','esewa','khalti'] },
+  { label:'Food',      cls:'b-food',   kw:['restaurant','cafe','coffee','dining','grocery','supermarket','swiggy','zomato','canteen','bakery','mcdonald','taco bell','subway','chipotle','doordash','grubhub','whole foods','ralphs','walmart','7-eleven','in-n-out','jon don','del taco','enchilada','liquor','starbucks','carls jr','carl\'s jr','the whole enchilada','boba','tea hou','moto','jensen','ranch steakhouse','kenos','lepho','vietnamese','food truck','express lanes'] },
+  { label:'Fuel',      cls:'b-fuel',   kw:['arco','chevron','shell','mobil','exxon','bp','fuel','gasoline','ampm','circle k','76 gas'] },
   { label:'Miscellaneous', cls:'b-misc', kw:[] },
 ];
 
@@ -282,9 +229,9 @@ function classify(desc) {
   return CATS.find(c => c.label==='Miscellaneous');
 }
 
-/* ═══════════════════════════════════════════════════════════════
+/* ═══════════════════════════════════════
    FILE HANDLING
-═══════════════════════════════════════════════════════════════ */
+═══════════════════════════════════════ */
 const fi = document.getElementById('fi');
 fi.addEventListener('change', e => { addFiles([...e.target.files]); e.target.value=''; });
 document.getElementById('dz').addEventListener('dragover',  e => { e.preventDefault(); document.getElementById('dz').classList.add('over'); });
@@ -293,7 +240,7 @@ document.getElementById('dz').addEventListener('drop', e => { e.preventDefault()
 
 async function addFiles(files) {
   for (const f of files) {
-    if (!f.name.toLowerCase().endsWith('.pdf') && f.type!=='application/pdf') { toast('Only PDFs: '+f.name, 'err'); continue; }
+    if (!f.name.toLowerCase().endsWith('.pdf') && f.type!=='application/pdf') { toast('Only PDFs: '+f.name,'err'); continue; }
     if (selectedFiles.length >= MAX_FILES) { toast('Max '+MAX_FILES+' files.','warn'); break; }
     if (selectedFiles.find(s => s.name===f.name)) continue;
     const mode = await quickScan(f);
@@ -304,382 +251,366 @@ async function addFiles(files) {
   document.getElementById('mode-hint').style.display = selectedFiles.length ? '' : 'none';
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   FIX #1 — ROBUST DIGITAL vs OCR DETECTION
-   Old code only checked page 1 with threshold of 80 chars.
-   New code: checks up to 3 pages, uses threshold of 200 chars,
-   and counts meaningful words (not just any chars).
-   A PDF is "digital" if ANY of the sampled pages has enough text.
-═══════════════════════════════════════════════════════════════ */
+/* ─── ROBUST DIGITAL vs OCR DETECTION ───
+   Checks up to 3 pages. A PDF is "digital" if ANY sampled page
+   has ≥200 meaningful chars AND we find ≥30 meaningful words total.
+   This prevents cover pages with sparse text from triggering OCR mode.
+*/
 async function quickScan(file) {
   try {
     const buf = await file.arrayBuffer();
     const pdf = await pdfjsLib.getDocument({data: new Uint8Array(buf)}).promise;
     const pagesToCheck = Math.min(pdf.numPages, 3);
-
-    let maxChars = 0;
-    let totalMeaningfulWords = 0;
-
+    let maxChars = 0, totalWords = 0;
     for (let p = 1; p <= pagesToCheck; p++) {
       const page    = await pdf.getPage(p);
-      const content = await page.getTextContent({ normalizeWhitespace: true });
-      const text    = content.items.map(i => i.str).join(' ').trim();
-      const chars   = text.length;
-      // Count words that are at least 2 chars (filters out OCR noise single chars)
-      const words   = text.split(/\s+/).filter(w => w.length >= 2).length;
-
-      if (chars > maxChars) maxChars = chars;
-      totalMeaningfulWords += words;
+      const content = await page.getTextContent({normalizeWhitespace:true});
+      const text    = content.items.map(i=>i.str).join(' ').trim();
+      const words   = text.split(/\s+/).filter(w=>w.length>=2).length;
+      if (text.length > maxChars) maxChars = text.length;
+      totalWords += words;
     }
-
-    // Digital if: any page has 200+ chars AND we found 30+ meaningful words across sampled pages
-    if (maxChars >= 200 && totalMeaningfulWords >= 30) return 'digital';
-    return 'ocr';
-
-  } catch(e) {
-    console.warn('quickScan error:', e);
-    return 'ocr';
-  }
+    return (maxChars >= 200 && totalWords >= 30) ? 'digital' : 'ocr';
+  } catch(e) { return 'ocr'; }
 }
 
 function toggleMode(name) {
-  const sf = selectedFiles.find(f => f.name === name);
-  if (sf) {
-    sf.mode = sf.mode === 'digital' ? 'ocr' : 'digital';
-    renderChips();
-    toast(`"${name}" switched to ${sf.mode.toUpperCase()} mode`, 'info');
-  }
+  const sf = selectedFiles.find(f=>f.name===name);
+  if (sf) { sf.mode = sf.mode==='digital'?'ocr':'digital'; renderChips(); toast(`"${name}" → ${sf.mode.toUpperCase()} mode`,'info'); }
 }
-
 function removeFile(name) {
-  selectedFiles = selectedFiles.filter(f => f.name !== name);
+  selectedFiles = selectedFiles.filter(f=>f.name!==name);
   renderChips();
   document.getElementById('btn-go').disabled = selectedFiles.length===0;
-  document.getElementById('mode-hint').style.display = selectedFiles.length ? '' : 'none';
+  document.getElementById('mode-hint').style.display = selectedFiles.length?'':'none';
 }
-
 function renderChips() {
-  document.getElementById('chips').innerHTML = selectedFiles.map(sf => `
+  document.getElementById('chips').innerHTML = selectedFiles.map(sf=>`
     <div class="chip">
       <span style="font-size:16px">${sf.mode==='ocr'?'🔍':'📝'}</span>
       <span class="chip-name" title="${esc(sf.name)}">${esc(sf.name)}</span>
-      <span class="chip-mode ${sf.mode==='ocr'?'ocr':''}" onclick="toggleMode(${JSON.stringify(sf.name)})" title="Click to toggle mode">${sf.mode==='ocr'?'OCR':'Digital'}</span>
+      <span class="chip-mode ${sf.mode==='ocr'?'ocr':''}" onclick="toggleMode(${JSON.stringify(sf.name)})" title="Click to toggle">${sf.mode==='ocr'?'OCR':'Digital'}</span>
       <button class="chip-rm" onclick="removeFile(${JSON.stringify(sf.name)})">×</button>
     </div>`).join('');
 }
-
 function clearAll() {
   selectedFiles=[]; allTransactions=[];
-  renderChips();
-  fi.value='';
-  document.getElementById('btn-go').disabled = true;
-  document.getElementById('btn-dl').disabled  = true;
-  document.getElementById('btn-lbl').textContent = '⚙ Extract Transactions';
-  document.getElementById('prog-box').style.display = 'none';
-  document.getElementById('log').style.display      = 'none';
-  document.getElementById('log').innerHTML           = '';
-  document.getElementById('stats-wrap').style.display  = 'none';
-  document.getElementById('tbl-wrap').style.display    = 'none';
-  document.getElementById('empty-state').style.display = '';
-  document.getElementById('dl-info').style.display     = 'none';
-  document.getElementById('mode-hint').style.display   = 'none';
-  document.getElementById('tbody').innerHTML = '';
+  renderChips(); fi.value='';
+  ['btn-go','btn-dl'].forEach(id=>document.getElementById(id).disabled=true);
+  document.getElementById('btn-lbl').textContent='⚙ Extract Transactions';
+  ['prog-box','log','stats-wrap','tbl-wrap','dl-info','mode-hint'].forEach(id=>document.getElementById(id).style.display='none');
+  document.getElementById('log').innerHTML='';
+  document.getElementById('empty-state').style.display='';
+  document.getElementById('tbody').innerHTML='';
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   MAIN EXTRACTION PIPELINE
-═══════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════
+   MAIN PIPELINE
+═══════════════════════════════════════ */
 document.getElementById('btn-go').addEventListener('click', runExtraction);
 
 async function runExtraction() {
   if (!selectedFiles.length) return;
-  allTransactions = [];
+  allTransactions=[];
+  document.getElementById('btn-lbl').innerHTML='<span class="spin"></span> Processing…';
+  document.getElementById('btn-go').disabled=true;
+  document.getElementById('btn-dl').disabled=true;
+  document.getElementById('prog-box').style.display='';
+  document.getElementById('log').style.display='';
+  document.getElementById('log').innerHTML='';
+  document.getElementById('stats-wrap').style.display='none';
+  document.getElementById('tbl-wrap').style.display='none';
+  document.getElementById('empty-state').style.display='none';
 
-  document.getElementById('btn-lbl').innerHTML = '<span class="spin"></span> Processing…';
-  document.getElementById('btn-go').disabled = true;
-  document.getElementById('btn-dl').disabled = true;
-  document.getElementById('prog-box').style.display = '';
-  document.getElementById('log').style.display      = '';
-  document.getElementById('log').innerHTML           = '';
-  document.getElementById('stats-wrap').style.display  = 'none';
-  document.getElementById('tbl-wrap').style.display    = 'none';
-  document.getElementById('empty-state').style.display = 'none';
+  const total=selectedFiles.length, balances={};
 
-  const total    = selectedFiles.length;
-  const balances = {};
-
-  for (let i=0; i<total; i++) {
-    const sf = selectedFiles[i];
-    const f  = sf.file;
-    setP(Math.round((i/total)*80), `File ${i+1}/${total}: ${f.name}`, '');
+  for (let i=0;i<total;i++) {
+    const sf=selectedFiles[i], f=sf.file;
+    setP(Math.round((i/total)*80),`File ${i+1}/${total}: ${f.name}`,'');
     logln(`📄 <b>${esc(f.name)}</b> — mode: <b>${sf.mode}</b>`);
 
     try {
-      let text = '';
-      if (sf.mode === 'digital') {
+      let text='';
+      if (sf.mode==='digital') {
         text = await extractDigital(f);
-        logln(`   ✓ Extracted ${text.length} chars`, 'ok');
-        // FIX #2 — fallback: if digital extraction yields very little, auto-switch to OCR
-        if (text.trim().length < 100) {
-          logln(`   ⚠ Very little text from digital mode — falling back to OCR`, 'warn');
-          text = await extractOCR(f, i, total);
+        logln(`   ✓ Extracted ${text.length} chars`,'ok');
+        if (text.trim().length<100) {
+          logln('   ⚠ Too little text from digital mode — falling back to OCR','warn');
+          text = await extractOCR(f,i,total);
         }
       } else {
-        logln(`   🔍 Running OCR… (${(await getPdfPageCount(f))} pages)`, 'warn');
-        text = await extractOCR(f, i, total);
+        logln(`   🔍 Running OCR… (${await getPdfPageCount(f)} pages)`,'warn');
+        text = await extractOCR(f,i,total);
       }
 
       if (!text.trim()) { logln('   ✗ No text found','err'); continue; }
 
-      const bank = detectBank(text);
+      const bank=detectBank(text);
       logln(`   🏦 Detected format: <b>${bank}</b>`);
 
       let result;
-      switch(bank) {
-        case 'Chase':         result = parseChase(text, f.name);         break;
-        case 'FirstFidelity': result = parseFirstFidelity(text, f.name); break;
-        default:              result = parseGeneric(text, f.name);        break;
-      }
+      if      (bank==='Chase')         result=parseChase(text,f.name);
+      else if (bank==='FirstFidelity') result=parseFirstFidelity(text,f.name);
+      else                             result=parseGeneric(text,f.name);
 
-      logln(`   ✓ Parsed <b>${result.transactions.length}</b> transaction(s)`, 'ok');
-      if (result.opening !== null) logln(`   · Opening balance: ${fmt(result.opening)}`, 'ok');
-      if (result.closing !== null) logln(`   · Closing balance: ${fmt(result.closing)}`, 'ok');
+      logln(`   ✓ Parsed <b>${result.transactions.length}</b> transactions`,'ok');
+      if (result.opening!==null) logln(`   · Opening: $${fmt(result.opening)}`,'ok');
+      if (result.closing!==null) logln(`   · Closing: $${fmt(result.closing)}`,'ok');
 
       allTransactions.push(...result.transactions);
-
-      // FIX #3 — store per-file balances AND per-file transaction totals for accurate validation
-      if (result.opening !== null || result.closing !== null) {
-        const fileCr = result.transactions.filter(t=>t.type==='Credit').reduce((s,t)=>s+t.amount,0);
-        const fileDr = result.transactions.filter(t=>t.type==='Debit').reduce((s,t)=>s+t.amount,0);
-        balances[f.name] = {
-          opening: result.opening,
-          closing: result.closing,
-          credits: fileCr,
-          debits:  fileDr
-        };
+      if (result.opening!==null || result.closing!==null) {
+        const fc=result.transactions.filter(t=>t.type==='Credit').reduce((s,t)=>s+t.amount,0);
+        const fd=result.transactions.filter(t=>t.type==='Debit').reduce((s,t)=>s+t.amount,0);
+        balances[f.name]={opening:result.opening,closing:result.closing,credits:fc,debits:fd};
       }
-
     } catch(err) {
-      logln(`   ✗ Error: ${err.message}`, 'err');
+      logln(`   ✗ Error: ${err.message}`,'err');
       console.error(err);
     }
   }
 
   setP(97,'Classifying & sorting…','');
-  allTransactions.forEach(tx => {
-    const c = classify(tx.description);
-    tx.category = c.label;
-    tx.catCls   = c.cls;
-  });
-  allTransactions.sort((a,b) => (a.date||'').localeCompare(b.date||''));
-
-  setP(100, `Done! ${allTransactions.length} transaction(s) extracted.`, '');
-  logln(`✅ <b>Complete.</b> ${allTransactions.length} transactions across ${total} file(s).`, 'ok');
+  allTransactions.forEach(tx=>{const c=classify(tx.description);tx.category=c.label;tx.catCls=c.cls;});
+  allTransactions.sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+  setP(100,`Done — ${allTransactions.length} transaction(s) extracted.`,'');
+  logln(`✅ <b>Complete:</b> ${allTransactions.length} transactions across ${total} file(s).`,'ok');
 
   await sleep(300);
-  document.getElementById('btn-lbl').textContent = '⚙ Extract Transactions';
-  document.getElementById('btn-go').disabled = false;
-  document.getElementById('btn-dl').disabled = allTransactions.length === 0;
-
+  document.getElementById('btn-lbl').textContent='⚙ Extract Transactions';
+  document.getElementById('btn-go').disabled=false;
+  document.getElementById('btn-dl').disabled=allTransactions.length===0;
   renderStats(balances);
   renderTable();
-  document.getElementById('stats-wrap').style.display  = '';
-  document.getElementById('tbl-wrap').style.display    = '';
+  document.getElementById('stats-wrap').style.display='';
+  document.getElementById('tbl-wrap').style.display='';
 
-  if (allTransactions.length > 0) {
-    const credits = allTransactions.filter(t=>t.type==='Credit').reduce((s,t)=>s+t.amount,0);
-    const debits  = allTransactions.filter(t=>t.type==='Debit').reduce((s,t)=>s+t.amount,0);
-    document.getElementById('dl-info').textContent = `${allTransactions.length} rows · Credits: ${fmt(credits)} · Debits: ${fmt(debits)}`;
-    document.getElementById('dl-info').style.display = '';
+  if (allTransactions.length>0) {
+    const tc=allTransactions.filter(t=>t.type==='Credit').reduce((s,t)=>s+t.amount,0);
+    const td=allTransactions.filter(t=>t.type==='Debit').reduce((s,t)=>s+t.amount,0);
+    document.getElementById('dl-info').textContent=`${allTransactions.length} rows · Credits: ${fmt(tc)} · Debits: ${fmt(td)}`;
+    document.getElementById('dl-info').style.display='';
   }
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   BANK FORMAT DETECTOR
-═══════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════
+   BANK DETECTOR
+═══════════════════════════════════════ */
 function detectBank(text) {
-  const t = text.toLowerCase();
-  if (t.includes('chase') || t.includes('jpmorgan') || t.includes('deposits and additions') || t.includes('atm & debit card withdrawals')) return 'Chase';
-  if (t.includes('first fidelity') || t.includes('checks cleared') || t.includes('easy interest-business') || t.includes('burke, sd')) return 'FirstFidelity';
+  const t=text.toLowerCase();
+  if (t.includes('chase')||t.includes('jpmorgan')||t.includes('deposits and additions')||t.includes('atm & debit card withdrawals')||t.includes('electronic withdrawals')) return 'Chase';
+  if (t.includes('first fidelity')||t.includes('checks cleared')||t.includes('easy interest-business')||t.includes('burke, sd')) return 'FirstFidelity';
   return 'Generic';
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   DIGITAL TEXT EXTRACTION (PDF.js)
-   Groups text items by Y coordinate to reconstruct row layout.
-═══════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════
+   DIGITAL TEXT EXTRACTION
+   Groups PDF text items by Y coordinate to recreate row layout.
+═══════════════════════════════════════ */
 async function extractDigital(file) {
-  const buf = await file.arrayBuffer();
-  const pdf = await pdfjsLib.getDocument({data: new Uint8Array(buf)}).promise;
-  let full  = '';
-
-  for (let p=1; p<=pdf.numPages; p++) {
-    const page    = await pdf.getPage(p);
-    const content = await page.getTextContent({normalizeWhitespace:true});
-
-    const map = {};
+  const buf=await file.arrayBuffer();
+  const pdf=await pdfjsLib.getDocument({data:new Uint8Array(buf)}).promise;
+  let full='';
+  for (let p=1;p<=pdf.numPages;p++) {
+    const page=await pdf.getPage(p);
+    const content=await page.getTextContent({normalizeWhitespace:true});
+    const map={};
     for (const item of content.items) {
       if (!item.str.trim()) continue;
-      const y = Math.round(item.transform[5] / 2) * 2;
-      const x = item.transform[4];
-      (map[y] = map[y]||[]).push({x, s: item.str});
+      const y=Math.round(item.transform[5]/2)*2;
+      const x=item.transform[4];
+      (map[y]=map[y]||[]).push({x,s:item.str});
     }
-
-    const ys = Object.keys(map).map(Number).sort((a,b)=>b-a);
+    const ys=Object.keys(map).map(Number).sort((a,b)=>b-a);
     for (const y of ys) {
-      const line = map[y].sort((a,b)=>a.x-b.x).map(i=>i.s).join('  ').replace(/\s{3,}/g,'  ').trim();
-      if (line) full += line + '\n';
+      const line=map[y].sort((a,b)=>a.x-b.x).map(i=>i.s).join('  ').replace(/\s{3,}/g,'  ').trim();
+      if (line) full+=line+'\n';
     }
-    full += '\n';
+    full+='\n';
   }
   return full;
 }
 
 async function getPdfPageCount(file) {
-  const buf = await file.arrayBuffer();
-  const pdf = await pdfjsLib.getDocument({data: new Uint8Array(buf)}).promise;
+  const buf=await file.arrayBuffer();
+  const pdf=await pdfjsLib.getDocument({data:new Uint8Array(buf)}).promise;
   return pdf.numPages;
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   OCR EXTRACTION (Tesseract.js)
-═══════════════════════════════════════════════════════════════ */
-async function extractOCR(file, fileIdx, totalFiles) {
-  const buf  = await file.arrayBuffer();
-  const pdf  = await pdfjsLib.getDocument({data: new Uint8Array(buf)}).promise;
-  const nPg  = pdf.numPages;
-
+/* ═══════════════════════════════════════
+   OCR EXTRACTION
+═══════════════════════════════════════ */
+async function extractOCR(file,fileIdx,totalFiles) {
+  const buf=await file.arrayBuffer();
+  const pdf=await pdfjsLib.getDocument({data:new Uint8Array(buf)}).promise;
+  const nPg=pdf.numPages;
   if (!window._ocrW) {
-    logln('   Loading OCR engine (first time ~15 sec)…','warn');
-    setP(null,null,'Downloading OCR engine…');
-    window._ocrW = await Tesseract.createWorker('eng', 1, {
-      logger: m => {
-        if (m.status==='recognizing text') {
-          document.getElementById('prog-sub').textContent = `OCR progress: ${Math.round((m.progress||0)*100)}%`;
-        }
-      }
+    logln('   Loading OCR engine (first time ~15s)…','warn');
+    window._ocrW=await Tesseract.createWorker('eng',1,{
+      logger:m=>{ if(m.status==='recognizing text') document.getElementById('prog-sub').textContent=`OCR: ${Math.round((m.progress||0)*100)}%`; }
     });
   }
-
-  let full = '';
-  for (let p=1; p<=nPg; p++) {
-    const pct = Math.round((fileIdx/totalFiles)*80) + Math.round(((p-1)/nPg)*(80/totalFiles));
-    setP(pct, `OCR page ${p}/${nPg}`, 'Recognising text…');
+  let full='';
+  for (let p=1;p<=nPg;p++) {
+    const pct=Math.round((fileIdx/totalFiles)*80)+Math.round(((p-1)/nPg)*(80/totalFiles));
+    setP(pct,`OCR page ${p}/${nPg}`,'Recognising text…');
     logln(`   OCR page ${p}/${nPg}…`);
-
-    const page     = await pdf.getPage(p);
-    const scale    = 2.8;
-    const viewport = page.getViewport({scale});
-    const canvas   = document.createElement('canvas');
-    canvas.width   = viewport.width;
-    canvas.height  = viewport.height;
-    await page.render({canvasContext:canvas.getContext('2d'), viewport}).promise;
-
-    const {data:{text}} = await window._ocrW.recognize(canvas);
-    full += text + '\n\n';
-    logln(`   ✓ Page ${p}: ${text.trim().split('\n').length} lines`, 'ok');
+    const page=await pdf.getPage(p);
+    const scale=2.8, vp=page.getViewport({scale});
+    const cv=document.createElement('canvas');
+    cv.width=vp.width; cv.height=vp.height;
+    await page.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;
+    const {data:{text}}=await window._ocrW.recognize(cv);
+    full+=text+'\n\n';
+    logln(`   ✓ Page ${p}: ${text.trim().split('\n').length} lines`,'ok');
   }
   return full;
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   CHASE PARSER
-   Sections: DEPOSITS AND ADDITIONS (credit)
-             ATM & DEBIT CARD WITHDRAWALS / ELECTRONIC WITHDRAWALS (debit)
+/* ═══════════════════════════════════════
+   ██████  CHASE PARSER  ██████
+   
+   Chase statements have these DEBIT sections:
+     • ATM & DEBIT CARD WITHDRAWALS
+     • ELECTRONIC WITHDRAWALS
+     • FEES
+   And this CREDIT section:
+     • DEPOSITS AND ADDITIONS
+   
+   All sections end when a new section header or a "Total …" line appears.
    Row format: MM/DD  DESCRIPTION  AMOUNT
-═══════════════════════════════════════════════════════════════ */
+   
+   From the actual PDF we can see:
+   - Beginning Balance: $445.24
+   - Deposits:          $16,373.74  (13 txns)
+   - ATM Withdrawals:   $12,090.42  (156 txns)
+   - Electronic W/D:    $4,185.00   (18 txns)
+   - Fees:              $3.00       (1 txn)
+   - Ending Balance:    $540.56
+   
+   Math check: 445.24 + 16373.74 - 12090.42 - 4185.00 - 3.00 = 540.56 ✓
+═══════════════════════════════════════ */
 function parseChase(text, fname) {
   const lines = text.split('\n').map(l=>l.trim()).filter(Boolean);
   const transactions = [];
   let opening = null, closing = null;
-  let section = '';
 
-  const SEC_CR  = /deposits\s*and\s*additions/i;
-  const SEC_DR  = /atm\s*&\s*debit\s*card\s*withdrawals|electronic\s*withdrawals|fees?\b/i;
-  const SEC_END = /daily\s*ending\s*balance|atm\s*&\s*debit\s*card\s*summary|total\s*(deposits|atm|electronic|fees)/i;
+  // ── Section header patterns ──
+  // CREDIT sections
+  const SEC_CR = /^deposits?\s*and\s*additions?\s*$/i;
 
-  const BAL_BEGIN = /beginning\s*balance[^\d]*([\d,]+\.\d{2})/i;
-  const BAL_END   = /ending\s*balance[^\d]*([\d,]+\.\d{2})/i;
-  const DATE_RX   = /^(\d{1,2})\/(\d{2})\b/;
+  // DEBIT sections — all three types that Chase uses
+  const SEC_DR_ATM  = /^atm\s*&\s*debit\s*card\s*withdrawals?\s*$/i;
+  const SEC_DR_ELEC = /^electronic\s*withdrawals?\s*$/i;
+  const SEC_DR_FEES = /^fees?\s*$/i;
 
-  // FIX #4 — more robust year/month detection from Chase statement header
-  let stmtYear  = new Date().getFullYear();
-  let stmtMonth = null;
+  // Section terminators (summary rows, new sections that aren't transactions)
+  const SEC_END = /^(atm\s*&\s*debit\s*card\s*summary|daily\s*ending\s*balance|overdraft|service\s*charge)/i;
+
+  // "Total …" lines inside a section end the transaction list for that section
+  const IS_TOTAL = /^total\s+(deposits?|atm|electronic|fees?|card|withdrawals?)/i;
+
+  // Chase date: MM/DD at start of line (no year on statement)
+  const DATE_RX = /^(\d{1,2})\/(\d{2})\b/;
+
+  // Balance lines
+  const BAL_BEGIN = /beginning\s*balance\b.*?([\d,]+\.\d{2})/i;
+  const BAL_END   = /ending\s*balance\b.*?([\d,]+\.\d{2})/i;
+
+  // ── Parse statement period to infer year ──
+  let stmtYear = new Date().getFullYear(), stmtMonth = null;
+  const MONTHS = {january:1,february:2,march:3,april:4,may:5,june:6,july:7,august:8,september:9,october:10,november:11,december:12};
 
   for (const line of lines) {
-    // Chase header: "January 03, 2025 through February 02, 2025"
-    const throughMatch = line.match(/(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},\s*(\d{4})\s+through\s+(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},\s*(\d{4})/i);
-    if (throughMatch) {
-      // Use the END date for stmtYear/stmtMonth (closing period)
-      const endMonthStr = throughMatch[3];
-      const endYear     = parseInt(throughMatch[4]);
-      const months      = {january:1,february:2,march:3,april:4,may:5,june:6,july:7,august:8,september:9,october:10,november:11,december:12};
-      stmtMonth = months[endMonthStr.toLowerCase()] || null;
-      stmtYear  = endYear;
+    // "March 01, 2025 through March 31, 2025"
+    const m = line.match(/(january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{1,2},?\s+(\d{4})\s+through\s+(january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{1,2},?\s+(\d{4})/i);
+    if (m) {
+      stmtMonth = MONTHS[m[3].toLowerCase()] || null;
+      stmtYear  = parseInt(m[4]);
+      logln(`   · Statement period end: ${m[3]} ${m[4]}`);
       break;
     }
-    // Fallback: any "Month DD, YYYY" in header
-    const m = line.match(/(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},\s*(\d{4})/i);
-    if (m) {
-      const months = {january:1,february:2,march:3,april:4,may:5,june:6,july:7,august:8,september:9,october:10,november:11,december:12};
-      stmtMonth = months[m[1].toLowerCase()] || null;
-      stmtYear  = parseInt(m[2]);
+    // Fallback: first "Month DD, YYYY" we see
+    const m2 = line.match(/(january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{1,2},?\s+(\d{4})/i);
+    if (m2 && !stmtMonth) {
+      stmtMonth = MONTHS[m2[1].toLowerCase()] || null;
+      stmtYear  = parseInt(m2[2]);
     }
   }
 
   function chaseDate(mm, dd) {
     const m = parseInt(mm);
-    let yr  = stmtYear;
-    // If transaction month is later than statement end month, it's from the prior year
-    if (stmtMonth && m > stmtMonth) yr = stmtYear - 1;
+    // If tx month > statement end month, it belongs to the previous year (cross-year statements)
+    const yr = (stmtMonth && m > stmtMonth) ? stmtYear - 1 : stmtYear;
     return `${yr}-${String(m).padStart(2,'0')}-${String(dd).padStart(2,'0')}`;
   }
 
-  // Balance pass
+  // ── First pass: balances ──
   for (const line of lines) {
-    let m = line.match(BAL_BEGIN);
-    if (m && opening===null) opening = parseFloat(m[1].replace(/,/g,''));
-    m = line.match(BAL_END);
-    if (m) closing = parseFloat(m[1].replace(/,/g,''));
+    const bm = line.match(BAL_BEGIN);
+    if (bm && opening===null) opening = parseFloat(bm[1].replace(/,/g,''));
+    const em = line.match(BAL_END);
+    if (em) closing = parseFloat(em[1].replace(/,/g,''));
   }
 
-  // Section-aware transaction pass
+  // ── Second pass: section-aware transaction parsing ──
+  let section = ''; // 'credit' | 'debit' | ''
+
   for (let i=0; i<lines.length; i++) {
     const line = lines[i];
 
-    if (SEC_CR.test(line))  { section='credit'; continue; }
-    if (SEC_DR.test(line))  { section='debit';  continue; }
-    if (SEC_END.test(line)) { section='';       continue; }
-    if (!section) continue;
-    if (/^date\s+desc/i.test(line) || /^total\s/i.test(line)) continue;
+    // ─ Detect section changes ─
+    if (SEC_CR.test(line))      { section='credit'; continue; }
+    if (SEC_DR_ATM.test(line))  { section='debit';  continue; }
+    if (SEC_DR_ELEC.test(line)) { section='debit';  continue; }
+    if (SEC_DR_FEES.test(line)) { section='debit';  continue; }
+    if (SEC_END.test(line))     { section='';       continue; }
 
+    // Total lines close current section but don't change section variable
+    // (next header will open the next section)
+    if (IS_TOTAL.test(line))    { continue; }
+
+    // Skip header rows and non-transaction lines
+    if (!section)                                     continue;
+    if (/^date\s+desc/i.test(line))                  continue;
+    if (/^(instances?|amount)\s*$/i.test(line))       continue;
+    if (/^\$[\d,]+\.\d{2}$/.test(line))               continue; // standalone amount line
+
+    // ─ Match date at start of line ─
     const dm = line.match(DATE_RX);
     if (!dm) continue;
 
     const mm = dm[1], dd = dm[2];
     const iso = chaseDate(mm, dd);
-
     let rest = line.slice(dm[0].length).trim();
 
-    // Handle multi-line transactions
-    let amtMatch = rest.match(/([\d,]+\.\d{2})\s*$/);
-    if (!amtMatch) {
+    // ─ Find the amount (rightmost number on the line) ─
+    // Handle multi-line transactions by peeking ahead
+    let finalAmtM = rest.match(/([\d,]+\.\d{2})\s*$/);
+    if (!finalAmtM) {
+      // Continuation lines: gather until we find an amount or hit the next date/section
       let combined = rest;
-      for (let j=i+1; j<=Math.min(i+3, lines.length-1); j++) {
+      for (let j=i+1; j<=Math.min(i+4, lines.length-1); j++) {
         const nx = lines[j];
-        if (DATE_RX.test(nx) || SEC_CR.test(nx) || SEC_DR.test(nx)) break;
+        // Stop if next line starts a new transaction or section
+        if (DATE_RX.test(nx) || SEC_CR.test(nx) || SEC_DR_ATM.test(nx) ||
+            SEC_DR_ELEC.test(nx) || SEC_DR_FEES.test(nx) || SEC_END.test(nx)) break;
         combined += ' ' + nx;
-        if (combined.match(/([\d,]+\.\d{2})\s*$/)) { rest = combined; i=j; break; }
+        if (combined.match(/([\d,]+\.\d{2})\s*$/)) { rest = combined; i = j; break; }
       }
+      finalAmtM = rest.match(/([\d,]+\.\d{2})\s*$/);
     }
 
-    const finalAmtM = rest.match(/([\d,]+\.\d{2})\s*$/);
     if (!finalAmtM) continue;
 
     const amount = parseFloat(finalAmtM[1].replace(/,/g,''));
     if (amount <= 0) continue;
 
-    let desc = rest.slice(0, rest.lastIndexOf(finalAmtM[1])).trim() || 'Transaction';
+    // Description = everything before the amount
+    let desc = rest.slice(0, rest.lastIndexOf(finalAmtM[1])).trim();
+
+    // Clean up description: remove leading/trailing punctuation, collapse spaces
+    desc = desc.replace(/\s{2,}/g,' ').replace(/^[,|:;\-]+|[,|:;\-]+$/g,'').trim();
+    if (!desc || desc.length < 2) desc = section==='credit' ? 'Credit' : 'Debit';
 
     transactions.push({
       date: iso,
@@ -693,205 +624,151 @@ function parseChase(text, fname) {
   return { transactions, opening, closing };
 }
 
-/* ═══════════════════════════════════════════════════════════════
+/* ═══════════════════════════════════════
    FIRST FIDELITY PARSER
-═══════════════════════════════════════════════════════════════ */
+═══════════════════════════════════════ */
 function parseFirstFidelity(text, fname) {
-  const lines = text.split('\n').map(l=>l.trim()).filter(Boolean);
-  const transactions = [];
-  let opening = null, closing = null;
-
-  const AMT  = /\$([\d,]+\.\d{2})/g;
-  const DATE_P = [
-    { rx:/\b(\d{2})\/(\d{2})\/(\d{4})\b/, fn:m=>`${m[3]}-${m[1]}-${m[2]}` },
-    { rx:/\b(\d{4})-(\d{2})-(\d{2})\b/,   fn:m=>`${m[1]}-${m[2]}-${m[3]}` },
+  const lines=text.split('\n').map(l=>l.trim()).filter(Boolean);
+  const transactions=[], AMT=/\$([\d,]+\.\d{2})/g;
+  let opening=null,closing=null;
+  const DATE_P=[
+    {rx:/\b(\d{2})\/(\d{2})\/(\d{4})\b/,fn:m=>`${m[3]}-${m[1]}-${m[2]}`},
+    {rx:/\b(\d{4})-(\d{2})-(\d{2})\b/,  fn:m=>`${m[1]}-${m[2]}-${m[3]}`},
   ];
-
-  function findDate(line) {
-    for (const p of DATE_P) { const m=line.match(p.rx); if(m) return {raw:m[0],iso:p.fn(m)}; }
-    return null;
-  }
-  function toF(s){ return parseFloat(s.replace(/[$,]/g,''))||0; }
-
-  let section = '';
-  const SEC_DEP    = /^deposits?\s*$/i;
-  const SEC_ELEC   = /^electronic\s*credits?\s*$/i;
-  const SEC_CHECKS = /^checks?\s*cleared/i;
-  const SEC_DAILY  = /^daily\s*balance/i;
-  const SEC_OD     = /^overdraft/i;
-
+  function findDate(l){for(const p of DATE_P){const m=l.match(p.rx);if(m)return{raw:m[0],iso:p.fn(m)};}return null;}
+  function toF(s){return parseFloat(s.replace(/[$,]/g,''))||0;}
+  let section='';
   for (const line of lines) {
-    if (/beginning\s*balance/i.test(line)) {
-      const a = [...line.matchAll(AMT)]; if(a.length && opening===null) opening = toF(a[a.length-1][1]);
-    }
-    if (/ending\s*balance/i.test(line)) {
-      const a = [...line.matchAll(AMT)]; if(a.length) closing = toF(a[a.length-1][1]);
-    }
+    if (/beginning\s*balance/i.test(line)){const a=[...line.matchAll(AMT)];if(a.length&&opening===null)opening=toF(a[a.length-1][1]);}
+    if (/ending\s*balance/i.test(line)){const a=[...line.matchAll(AMT)];if(a.length)closing=toF(a[a.length-1][1]);}
   }
-
-  for (let i=0; i<lines.length; i++) {
-    const line = lines[i];
-
-    if (SEC_DEP.test(line))    { section='deposit';  continue; }
-    if (SEC_ELEC.test(line))   { section='elec';     continue; }
-    if (SEC_CHECKS.test(line)) { section='checks';   continue; }
-    if (SEC_DAILY.test(line) || SEC_OD.test(line)) { section=''; continue; }
-
-    if (section==='deposit' || section==='elec') {
-      const dm = findDate(line);
-      if (!dm) continue;
-      const amts = [...line.matchAll(AMT)].map(m=>toF(m[1])).filter(v=>v>0);
-      if (!amts.length) {
-        const nx = lines[i+1]||'';
-        const na = [...nx.matchAll(AMT)].map(m=>toF(m[1])).filter(v=>v>0);
-        if (!na.length) continue;
-        amts.push(na[0]); i++;
-      }
-      let desc = line.replace(dm.raw,'').replace(/\$([\d,]+\.\d{2})/g,'').trim() || (section==='elec'?'Electronic Credit':'Deposit');
-      transactions.push({ date:dm.iso, description:desc, type:'Credit', amount:amts[amts.length-1], category:'', catCls:'', source:fname });
-
+  for (let i=0;i<lines.length;i++) {
+    const line=lines[i];
+    if (/^deposits?\s*$/i.test(line)){section='deposit';continue;}
+    if (/^electronic\s*credits?\s*$/i.test(line)){section='elec';continue;}
+    if (/^checks?\s*cleared/i.test(line)){section='checks';continue;}
+    if (/^(daily\s*balance|overdraft)/i.test(line)){section='';continue;}
+    if (section==='deposit'||section==='elec') {
+      const dm=findDate(line);if(!dm)continue;
+      const amts=[...line.matchAll(AMT)].map(m=>toF(m[1])).filter(v=>v>0);
+      if (!amts.length){const nx=lines[i+1]||'';const na=[...nx.matchAll(AMT)].map(m=>toF(m[1])).filter(v=>v>0);if(!na.length)continue;amts.push(na[0]);i++;}
+      let desc=line.replace(dm.raw,'').replace(/\$([\d,]+\.\d{2})/g,'').trim()||(section==='elec'?'Electronic Credit':'Deposit');
+      transactions.push({date:dm.iso,description:desc,type:'Credit',amount:amts[amts.length-1],category:'',catCls:'',source:fname});
     } else if (section==='checks') {
-      const dateMatches = [...line.matchAll(/\b(\d{2})\/(\d{2})\/(\d{4})\b/g)];
-      const amtMatches  = [...line.matchAll(/\$([\d,]+\.\d{2})/g)];
-      const chkMatches  = [...line.matchAll(/\b(\d{4,6})\b/g)];
+      const dateMatches=[...line.matchAll(/\b(\d{2})\/(\d{2})\/(\d{4})\b/g)];
+      const amtMatches=[...line.matchAll(/\$([\d,]+\.\d{2})/g)];
+      const chkMatches=[...line.matchAll(/\b(\d{4,6})\b/g)];
       if (!dateMatches.length) continue;
-      for (let k=0; k<dateMatches.length; k++) {
-        const dm  = dateMatches[k];
-        const amt = amtMatches[k];
+      for (let k=0;k<dateMatches.length;k++) {
+        const dm=dateMatches[k],amt=amtMatches[k];
         if (!amt) continue;
-        const chk = chkMatches[k] ? chkMatches[k][1] : '?';
-        const iso = `${dm[3]}-${dm[1]}-${dm[2]}`;
-        transactions.push({ date:iso, description:`Check #${chk}`, type:'Debit', amount:toF(amt[1]), category:'', catCls:'', source:fname });
+        const chk=chkMatches[k]?chkMatches[k][1]:'?';
+        transactions.push({date:`${dm[3]}-${dm[1]}-${dm[2]}`,description:`Check #${chk}`,type:'Debit',amount:toF(amt[1]),category:'',catCls:'',source:fname});
       }
     }
   }
-
-  if (transactions.length < 3) {
-    logln('   ↩ First Fidelity parser got < 3 rows, trying generic…','warn');
-    const g = parseGeneric(text, fname);
-    return { transactions: g.transactions.length > transactions.length ? g.transactions : transactions, opening, closing };
+  if (transactions.length<3) {
+    logln('   ↩ First Fidelity got <3 rows, trying generic…','warn');
+    const g=parseGeneric(text,fname);
+    return {transactions:g.transactions.length>transactions.length?g.transactions:transactions,opening,closing};
   }
-
-  return { transactions, opening, closing };
+  return {transactions,opening,closing};
 }
 
-/* ═══════════════════════════════════════════════════════════════
+/* ═══════════════════════════════════════
    GENERIC PARSER
-   Handles any date-anchored format.
-═══════════════════════════════════════════════════════════════ */
+═══════════════════════════════════════ */
 function parseGeneric(text, fname) {
-  const lines = text.split('\n').map(l=>l.trim()).filter(Boolean);
-  const transactions = [];
-  let opening = null, closing = null;
-
-  const AMT_RX  = /\b[\d,]+\.\d{2}\b/g;
-  const OPEN_RX = /opening\s*bal|beginning\s*bal|brought\s*fwd|b[\/]f\b/i;
-  const CLOS_RX = /closing\s*bal|ending\s*bal|carried\s*fwd|c[\/]f\b/i;
-  const CR_RX   = /\b(cr|credit|credited|deposit|received|inward|reversal|refund|addition)\b/i;
-  const DR_RX   = /\b(dr|debit|debited|withdraw|paid|payment|purchase|charge|fee|withdrawal)\b/i;
-
-  const DATE_P = [
-    { rx:/\b(\d{4})[\/\-](\d{2})[\/\-](\d{2})\b/,  fn:m=>`${m[1]}-${m[2]}-${m[3]}` },
-    { rx:/\b(\d{2})[\/\-](\d{2})[\/\-](\d{4})\b/,  fn:m=>+m[1]>12?`${m[3]}-${m[2]}-${m[1]}`:`${m[3]}-${m[1]}-${m[2]}` },
-    { rx:/\b(\d{1,2})[\s\-](Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*[\s\-](\d{4})\b/i, fn:m=>`${m[3]}-${mo(m[2])}-${m[1].padStart(2,'0')}` },
-    { rx:/\b(\d{2})(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)(\d{4})\b/i, fn:m=>`${m[3]}-${mo(m[2])}-${m[1]}` },
+  const lines=text.split('\n').map(l=>l.trim()).filter(Boolean);
+  const transactions=[];
+  let opening=null,closing=null;
+  const AMT_RX=/\b[\d,]+\.\d{2}\b/g;
+  const OPEN_RX=/opening\s*bal|beginning\s*bal|brought\s*fwd|b[\/]f\b/i;
+  const CLOS_RX=/closing\s*bal|ending\s*bal|carried\s*fwd|c[\/]f\b/i;
+  const CR_RX=/\b(cr|credit|credited|deposit|received|inward|reversal|refund|addition)\b/i;
+  const DR_RX=/\b(dr|debit|debited|withdraw|paid|payment|purchase|charge|fee|withdrawal)\b/i;
+  const DATE_P=[
+    {rx:/\b(\d{4})[\/\-](\d{2})[\/\-](\d{2})\b/,fn:m=>`${m[1]}-${m[2]}-${m[3]}`},
+    {rx:/\b(\d{2})[\/\-](\d{2})[\/\-](\d{4})\b/,fn:m=>+m[1]>12?`${m[3]}-${m[2]}-${m[1]}`:`${m[3]}-${m[1]}-${m[2]}`},
+    {rx:/\b(\d{1,2})[\s\-](Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*[\s\-](\d{4})\b/i,fn:m=>`${m[3]}-${mo(m[2])}-${m[1].padStart(2,'0')}`},
+    {rx:/\b(\d{2})(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)(\d{4})\b/i,fn:m=>`${m[3]}-${mo(m[2])}-${m[1]}`},
   ];
-  function mo(s){ return String({jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12}[s.slice(0,3).toLowerCase()]||1).padStart(2,'0'); }
-  function findDate(line){ for(const p of DATE_P){const m=line.match(p.rx);if(m)return{raw:m[0],iso:p.fn(m)};} return null; }
-  function toF(s){ return parseFloat(s.replace(/,/g,''))||0; }
-
+  function mo(s){return String({jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12}[s.slice(0,3).toLowerCase()]||1).padStart(2,'0');}
+  function findDate(l){for(const p of DATE_P){const m=l.match(p.rx);if(m)return{raw:m[0],iso:p.fn(m)};}return null;}
+  function toF(s){return parseFloat(s.replace(/,/g,''))||0;}
   for (const line of lines) {
-    if (OPEN_RX.test(line)){ const a=line.match(AMT_RX); if(a && opening===null) opening=toF(a[a.length-1]); }
-    if (CLOS_RX.test(line)){ const a=line.match(AMT_RX); if(a) closing=toF(a[a.length-1]); }
+    if (OPEN_RX.test(line)){const a=line.match(AMT_RX);if(a&&opening===null)opening=toF(a[a.length-1]);}
+    if (CLOS_RX.test(line)){const a=line.match(AMT_RX);if(a)closing=toF(a[a.length-1]);}
   }
-
-  for (let i=0; i<lines.length; i++) {
-    const line = lines[i];
-    const dm = findDate(line);
-    if (!dm) continue;
-    const amts = (line.match(AMT_RX)||[]).map(toF).filter(v=>v>0);
-    if (!amts.length) continue;
-
-    let isCredit = null;
-    if (CR_RX.test(line)) isCredit = true;
-    if (DR_RX.test(line)) isCredit = false;
-    if (isCredit===null) {
-      const ctx = (lines[i+1]||'')+(lines[i+2]||'');
-      if (CR_RX.test(ctx)) isCredit = true;
-      else if (DR_RX.test(ctx)) isCredit = false;
-      else isCredit = false;
-    }
-
-    let amount = amts[0];
-    if (amts.length >= 3) { amount = isCredit ? amts[1] : amts[0]; if(!amount) amount=amts[0]; }
-
-    let desc = line.replace(dm.raw,'').replace(AMT_RX,'').replace(/\b(CR|DR|Cr|Dr)\b/g,'').replace(/[|\t]/g,' ').replace(/\s{2,}/g,' ').trim();
-    if (!desc || desc.length<2) desc = 'Transaction';
-
-    transactions.push({ date:dm.iso, description:desc, type:isCredit?'Credit':'Debit', amount, category:'', catCls:'', source:fname });
+  for (let i=0;i<lines.length;i++) {
+    const line=lines[i];
+    const dm=findDate(line);if(!dm)continue;
+    const amts=(line.match(AMT_RX)||[]).map(toF).filter(v=>v>0);if(!amts.length)continue;
+    let isCredit=null;
+    if (CR_RX.test(line)) isCredit=true;
+    if (DR_RX.test(line)) isCredit=false;
+    if (isCredit===null){const ctx=(lines[i+1]||'')+(lines[i+2]||'');isCredit=CR_RX.test(ctx)?true:DR_RX.test(ctx)?false:false;}
+    let amount=amts[0];
+    if (amts.length>=3){amount=isCredit?amts[1]:amts[0];if(!amount)amount=amts[0];}
+    let desc=line.replace(dm.raw,'').replace(AMT_RX,'').replace(/\b(CR|DR|Cr|Dr)\b/g,'').replace(/[|\t]/g,' ').replace(/\s{2,}/g,' ').trim();
+    if (!desc||desc.length<2) desc='Transaction';
+    transactions.push({date:dm.iso,description:desc,type:isCredit?'Credit':'Debit',amount,category:'',catCls:'',source:fname});
   }
-
-  return { transactions, opening, closing };
+  return {transactions,opening,closing};
 }
 
-/* ═══════════════════════════════════════════════════════════════
+/* ═══════════════════════════════════════
    STATS & VALIDATION
-   FIX #3 — Use per-file credits/debits for balance check
-   (not the global total which mixes multiple files)
-═══════════════════════════════════════════════════════════════ */
+   Uses per-file credits/debits (not global totals) for accuracy.
+═══════════════════════════════════════ */
 function renderStats(balances) {
-  const credits = allTransactions.filter(t=>t.type==='Credit').reduce((s,t)=>s+t.amount,0);
-  const debits  = allTransactions.filter(t=>t.type==='Debit').reduce((s,t)=>s+t.amount,0);
-  const net     = credits - debits;
+  const credits=allTransactions.filter(t=>t.type==='Credit').reduce((s,t)=>s+t.amount,0);
+  const debits =allTransactions.filter(t=>t.type==='Debit').reduce((s,t)=>s+t.amount,0);
+  const net=credits-debits;
+  document.getElementById('s-cnt').textContent=allTransactions.length;
+  document.getElementById('s-cr').textContent=fmt(credits);
+  document.getElementById('s-dr').textContent=fmt(debits);
+  const ne=document.getElementById('s-net');
+  ne.textContent=fmt(Math.abs(net));
+  ne.className='sum-val '+(net>=0?'cr':'dr');
 
-  document.getElementById('s-cnt').textContent = allTransactions.length;
-  document.getElementById('s-cr').textContent  = fmt(credits);
-  document.getElementById('s-dr').textContent  = fmt(debits);
-  const ne = document.getElementById('s-net');
-  ne.textContent = fmt(Math.abs(net));
-  ne.className   = 'sum-val '+(net>=0?'cr':'dr');
-
-  const vb = document.getElementById('v-banner');
+  const vb=document.getElementById('v-banner');
   if (!allTransactions.length) {
-    vb.innerHTML = `<div class="banner err"><span class="banner-icon">❌</span><div><strong>No transactions extracted.</strong> Try toggling the file to OCR mode.</div></div>`;
+    vb.innerHTML=`<div class="banner err"><span class="banner-icon">❌</span><div><strong>No transactions extracted.</strong> Try toggling the file to OCR mode.</div></div>`;
     return;
   }
 
-  let mismatches = [];
-  let validated  = 0;
-
-  for (const [fn, b] of Object.entries(balances||{})) {
-    if (b.opening !== null && b.closing !== null) {
-      // Expected closing = opening + file's own credits - file's own debits
-      const expected = parseFloat((b.opening + b.credits - b.debits).toFixed(2));
-      const actual   = parseFloat(b.closing.toFixed(2));
-      const diff     = Math.abs(expected - actual);
-      if (diff > 1) {
-        mismatches.push(`${esc(fn)}: expected ${fmt(expected)}, found ${fmt(actual)} (Δ ${fmt(diff)})`);
-      } else {
-        validated++;
-      }
+  let mismatches=[], validated=0;
+  for (const [fn,b] of Object.entries(balances||{})) {
+    if (b.opening!==null && b.closing!==null) {
+      // Expected closing = opening + this file's credits - this file's debits
+      const expected=parseFloat((b.opening + b.credits - b.debits).toFixed(2));
+      const actual  =parseFloat(b.closing.toFixed(2));
+      const diff    =Math.abs(expected-actual);
+      if (diff>1) mismatches.push({fn,expected,actual,diff});
+      else validated++;
     }
   }
 
   if (mismatches.length) {
-    vb.innerHTML = `<div class="banner warn"><span class="banner-icon">⚠️</span><div><strong>Balance mismatch detected.</strong> Some transactions may be missing.<br>${mismatches.map(m=>`<div style="margin-top:4px;font-size:12px">${m}</div>`).join('')}<div style="margin-top:6px;font-size:12px">Tip: If the file shows "Digital" but extraction looks wrong, click the badge to switch to OCR mode and re-run.</div></div></div>`;
-  } else if (validated > 0) {
-    vb.innerHTML = `<div class="banner ok"><span class="banner-icon">✅</span><div>Balance validation passed for ${validated} file(s).</div></div>`;
+    const rows=mismatches.map(m=>`<div style="margin-top:4px;font-size:12px">• ${esc(m.fn)}: expected $${fmt(m.expected)}, found $${fmt(m.actual)} (Δ $${fmt(m.diff)})</div>`).join('');
+    vb.innerHTML=`<div class="banner warn"><span class="banner-icon">⚠️</span><div><strong>Balance mismatch detected.</strong> Some transactions may be missing or misclassified.<br>${rows}<div style="margin-top:6px;font-size:12px;opacity:.8">If the mode badge shows "Digital" but results look wrong, click it to switch to OCR and re-run.</div></div></div>`;
+  } else if (validated>0) {
+    vb.innerHTML=`<div class="banner ok"><span class="banner-icon">✅</span><div><strong>Balance validation passed</strong> for ${validated} file(s). All transactions accounted for.</div></div>`;
   } else {
-    vb.innerHTML = `<div class="banner warn"><span class="banner-icon">ℹ️</span><div>Opening/closing balance not detected — verify totals manually.</div></div>`;
+    vb.innerHTML=`<div class="banner warn"><span class="banner-icon">ℹ️</span><div>Opening/closing balance not detected — verify totals manually.</div></div>`;
   }
 }
 
-/* ═══════════════════════════════════════════════════════════════
+/* ═══════════════════════════════════════
    TABLE
-═══════════════════════════════════════════════════════════════ */
+═══════════════════════════════════════ */
 function renderTable(data) {
-  const rows = data || allTransactions;
-  document.getElementById('tbl-count').textContent = rows.length + ' rows';
-  document.getElementById('tbody').innerHTML = rows.length === 0
-    ? `<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--ink3);">No transactions match your filters.</td></tr>`
-    : rows.map((t,i) => `
+  const rows=data||allTransactions;
+  document.getElementById('tbl-count').textContent=rows.length+' rows';
+  document.getElementById('tbody').innerHTML=rows.length===0
+    ?`<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--ink3);">No transactions match your filters.</td></tr>`
+    :rows.map((t,i)=>`
       <tr>
         <td style="color:var(--ink3);font-size:11px">${i+1}</td>
         <td class="mono">${esc(t.date||'—')}</td>
@@ -904,100 +781,82 @@ function renderTable(data) {
 }
 
 function filterTable() {
-  const q    = document.getElementById('s-inp').value.toLowerCase();
-  const type = document.getElementById('f-type').value;
-  const cat  = document.getElementById('f-cat').value;
-  renderTable(allTransactions.filter(t => {
-    if (type && t.type!==type) return false;
-    if (cat  && t.category!==cat) return false;
-    if (q && !(t.date+' '+t.description+' '+t.amount+' '+t.category).toLowerCase().includes(q)) return false;
+  const q=document.getElementById('s-inp').value.toLowerCase();
+  const type=document.getElementById('f-type').value;
+  const cat=document.getElementById('f-cat').value;
+  renderTable(allTransactions.filter(t=>{
+    if (type&&t.type!==type) return false;
+    if (cat&&t.category!==cat) return false;
+    if (q&&!(t.date+' '+t.description+' '+t.amount+' '+t.category).toLowerCase().includes(q)) return false;
     return true;
   }));
 }
 
-/* ═══════════════════════════════════════════════════════════════
+/* ═══════════════════════════════════════
    EXCEL EXPORT
-═══════════════════════════════════════════════════════════════ */
+═══════════════════════════════════════ */
 function downloadExcel() {
-  if (!allTransactions.length) { toast('No transactions to export.','warn'); return; }
-
-  const wb = XLSX.utils.book_new();
-
-  const ws1 = XLSX.utils.aoa_to_sheet([
+  if (!allTransactions.length){toast('No transactions to export.','warn');return;}
+  const wb=XLSX.utils.book_new();
+  const ws1=XLSX.utils.aoa_to_sheet([
     ['Date','Description','Type','Amount','Category','Source File'],
-    ...allTransactions.map(t=>[
-      t.date, t.description, t.type,
-      t.type==='Credit' ? t.amount : -t.amount,
-      t.category, t.source
-    ])
+    ...allTransactions.map(t=>[t.date,t.description,t.type,t.type==='Credit'?t.amount:-t.amount,t.category,t.source])
   ]);
-  ws1['!cols'] = [{wch:14},{wch:52},{wch:10},{wch:16},{wch:18},{wch:30}];
-  XLSX.utils.book_append_sheet(wb, ws1, 'Transactions');
-
-  const credits = allTransactions.filter(t=>t.type==='Credit').reduce((s,t)=>s+t.amount,0);
-  const debits  = allTransactions.filter(t=>t.type==='Debit').reduce((s,t)=>s+t.amount,0);
-  const ws2 = XLSX.utils.aoa_to_sheet([
+  ws1['!cols']=[{wch:14},{wch:60},{wch:10},{wch:16},{wch:18},{wch:30}];
+  XLSX.utils.book_append_sheet(wb,ws1,'Transactions');
+  const credits=allTransactions.filter(t=>t.type==='Credit').reduce((s,t)=>s+t.amount,0);
+  const debits =allTransactions.filter(t=>t.type==='Debit').reduce((s,t)=>s+t.amount,0);
+  const ws2=XLSX.utils.aoa_to_sheet([
     ['Summary',''],
-    ['Total Transactions', allTransactions.length],
-    ['Total Credits', credits],
-    ['Total Debits',  debits],
-    ['Net (CR − DR)', credits - debits],
-    ['',''],
+    ['Total Transactions',allTransactions.length],
+    ['Total Credits',credits],['Total Debits',debits],['Net (CR − DR)',credits-debits],['',''],
     ['Category Breakdown','Net Amount'],
-    ...CATS.map(c=>[c.label, allTransactions.filter(t=>t.category===c.label).reduce((s,t)=>s+(t.type==='Credit'?t.amount:-t.amount),0)])
+    ...CATS.map(c=>[c.label,allTransactions.filter(t=>t.category===c.label).reduce((s,t)=>s+(t.type==='Credit'?t.amount:-t.amount),0)])
   ]);
-  ws2['!cols'] = [{wch:26},{wch:18}];
-  XLSX.utils.book_append_sheet(wb, ws2, 'Summary');
-
-  const sources = [...new Set(allTransactions.map(t=>t.source))];
-  const ws3rows = [['Source File','Transactions','Credits','Debits','Net']];
-  for (const src of sources) {
-    const rows = allTransactions.filter(t=>t.source===src);
-    const cr   = rows.filter(t=>t.type==='Credit').reduce((s,t)=>s+t.amount,0);
-    const dr   = rows.filter(t=>t.type==='Debit').reduce((s,t)=>s+t.amount,0);
-    ws3rows.push([src, rows.length, cr, dr, cr-dr]);
+  ws2['!cols']=[{wch:26},{wch:18}];
+  XLSX.utils.book_append_sheet(wb,ws2,'Summary');
+  const sources=[...new Set(allTransactions.map(t=>t.source))];
+  const ws3rows=[['Source File','Transactions','Credits','Debits','Net']];
+  for (const src of sources){
+    const rows=allTransactions.filter(t=>t.source===src);
+    const cr=rows.filter(t=>t.type==='Credit').reduce((s,t)=>s+t.amount,0);
+    const dr=rows.filter(t=>t.type==='Debit').reduce((s,t)=>s+t.amount,0);
+    ws3rows.push([src,rows.length,cr,dr,cr-dr]);
   }
-  const ws3 = XLSX.utils.aoa_to_sheet(ws3rows);
-  ws3['!cols'] = [{wch:35},{wch:14},{wch:14},{wch:14},{wch:14}];
-  XLSX.utils.book_append_sheet(wb, ws3, 'By File');
-
-  XLSX.writeFile(wb, 'transactions_' + new Date().toISOString().slice(0,10) + '.xlsx');
-  toast('Excel downloaded successfully!','ok');
+  const ws3=XLSX.utils.aoa_to_sheet(ws3rows);
+  ws3['!cols']=[{wch:35},{wch:14},{wch:14},{wch:14},{wch:14}];
+  XLSX.utils.book_append_sheet(wb,ws3,'By File');
+  XLSX.writeFile(wb,'transactions_'+new Date().toISOString().slice(0,10)+'.xlsx');
+  toast('Excel downloaded!','ok');
 }
 
-/* ═══════════════════════════════════════════════════════════════
+/* ═══════════════════════════════════════
    HELPERS
-═══════════════════════════════════════════════════════════════ */
-function setP(pct, label, sub) {
-  if (pct!==null)  { document.getElementById('prog-bar').style.width = pct+'%'; document.getElementById('prog-pct').textContent = pct+'%'; }
-  if (label!==null) document.getElementById('prog-lbl').textContent  = label;
-  if (sub!==null)   document.getElementById('prog-sub').textContent  = sub||'';
+═══════════════════════════════════════ */
+function setP(pct,label,sub){
+  if(pct!==null){document.getElementById('prog-bar').style.width=pct+'%';document.getElementById('prog-pct').textContent=pct+'%';}
+  if(label!==null)document.getElementById('prog-lbl').textContent=label;
+  if(sub!==null)document.getElementById('prog-sub').textContent=sub||'';
 }
-
-function logln(html, cls='') {
-  const box  = document.getElementById('log');
-  const span = document.createElement('div');
-  span.className = cls ? 'log-'+cls : '';
-  span.innerHTML = html;
-  box.appendChild(span);
-  box.scrollTop  = box.scrollHeight;
+function logln(html,cls=''){
+  const box=document.getElementById('log');
+  const span=document.createElement('div');
+  span.className=cls?'log-'+cls:'';span.innerHTML=html;
+  box.appendChild(span);box.scrollTop=box.scrollHeight;
 }
-
-function fmt(n){ return Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
-function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
-
-function toast(msg, type='info') {
-  const icons = {ok:'✅',err:'❌',warn:'⚠️',info:'ℹ️'};
-  const el = document.createElement('div');
-  el.className = 'toast '+(type||'');
-  el.innerHTML = `<span>${icons[type]||'ℹ️'}</span><span style="flex:1">${esc(msg)}</span><button class="t-x" onclick="this.parentElement.remove()">×</button>`;
+function fmt(n){return Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+function toast(msg,type='info'){
+  const icons={ok:'✅',err:'❌',warn:'⚠️',info:'ℹ️'};
+  const el=document.createElement('div');
+  el.className='toast '+(type||'');
+  el.innerHTML=`<span>${icons[type]||'ℹ️'}</span><span style="flex:1">${esc(msg)}</span><button class="t-x" onclick="this.parentElement.remove()">×</button>`;
   document.getElementById('toasts').appendChild(el);
-  setTimeout(()=>el.parentElement&&el.remove(), 7000);
+  setTimeout(()=>el.parentElement&&el.remove(),7000);
 }
-
-document.addEventListener('dragover', e=>e.preventDefault());
-document.addEventListener('drop', e=>{ e.preventDefault(); addFiles([...e.dataTransfer.files]); });
+document.addEventListener('dragover',e=>e.preventDefault());
+document.addEventListener('drop',e=>{e.preventDefault();addFiles([...e.dataTransfer.files]);});
 </script>
 </body>
 </html>
