@@ -4,30 +4,23 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>Bank Transaction Extractor</title>
-<!--
-  LIBRARIES:
-  · PDF.js  v2  — text extraction from digital PDFs
-  · Tesseract.js v5 — OCR for scanned/image PDFs (fallback)
-  · SheetJS — real .xlsx Excel generation
--->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 <script src="https://unpkg.com/tesseract.js@5.0.4/dist/tesseract.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 :root{
-  --bg:#f0f3fa; --surface:#fff; --border:#dde4f0;
-  --ink:#111827; --ink2:#4b5563; --ink3:#9ca3af;
-  --blue:#2563eb; --blue-lt:#eff6ff; --blue-dk:#1d4ed8;
-  --green:#059669; --green-lt:#ecfdf5;
-  --red:#dc2626;  --red-lt:#fef2f2;
-  --amber:#d97706; --amber-lt:#fffbeb;
-  --r:12px; --rs:8px;
+  --bg:#f0f3fa;--surface:#fff;--border:#dde4f0;
+  --ink:#111827;--ink2:#4b5563;--ink3:#9ca3af;
+  --blue:#2563eb;--blue-lt:#eff6ff;--blue-dk:#1d4ed8;
+  --green:#059669;--green-lt:#ecfdf5;
+  --red:#dc2626;--red-lt:#fef2f2;
+  --amber:#d97706;--amber-lt:#fffbeb;
+  --r:12px;--rs:8px;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;font-size:14px;}
 
-/* HEADER */
 .hdr{background:linear-gradient(135deg,#1e3a8a 0%,#2563eb 100%);padding:0 24px;box-shadow:0 2px 12px rgba(37,99,235,.4);}
 .hdr-in{max-width:1200px;margin:0 auto;display:flex;align-items:center;gap:14px;height:62px;}
 .hdr-logo{font-size:26px;}
@@ -35,17 +28,14 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--i
 .hdr p{font-size:12px;color:rgba(255,255,255,.7);margin-top:1px;}
 .hdr-pill{margin-left:auto;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);border-radius:20px;padding:4px 14px;font-size:11.5px;font-weight:600;color:#fff;}
 
-/* MAIN */
 .main{max-width:1200px;margin:0 auto;padding:24px 20px 80px;display:grid;grid-template-columns:340px 1fr;gap:20px;align-items:start;}
 @media(max-width:800px){.main{grid-template-columns:1fr;}}
 
-/* PANEL */
 .panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;}
 .panel-hdr{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;}
 .panel-hdr h2{font-size:13px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.6px;}
 .panel-body{padding:18px;}
 
-/* DROP ZONE */
 #dz{border:2px dashed #c7d7fa;border-radius:var(--rs);background:#f5f8ff;padding:32px 16px;text-align:center;cursor:pointer;transition:all .18s;position:relative;}
 #dz:hover,#dz.over{border-color:var(--blue);background:#eff6ff;}
 #dz input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;}
@@ -53,7 +43,6 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--i
 .dz-t{font-size:14px;font-weight:600;color:var(--blue);margin-bottom:3px;}
 .dz-s{font-size:12px;color:var(--ink3);}
 
-/* CHIPS */
 #chips{margin-top:12px;display:flex;flex-direction:column;gap:6px;}
 .chip{display:flex;align-items:center;gap:8px;background:#f5f8ff;border:1px solid #dbeafe;border-radius:var(--rs);padding:8px 10px;font-size:12.5px;animation:pin .2s ease;}
 @keyframes pin{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:translateY(0);}}
@@ -61,10 +50,10 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--i
 .chip-size{font-size:11px;color:var(--ink3);}
 .chip-rm{background:none;border:none;cursor:pointer;font-size:16px;color:#93c5fd;transition:color .1s;padding:0 2px;}
 .chip-rm:hover{color:var(--red);}
-.chip-mode{font-size:10px;font-weight:700;border-radius:10px;padding:2px 7px;background:#dbeafe;color:#1e40af;}
+.chip-mode{font-size:10px;font-weight:700;border-radius:10px;padding:2px 7px;background:#dbeafe;color:#1e40af;cursor:pointer;user-select:none;transition:all .15s;}
+.chip-mode:hover{opacity:.8;}
 .chip-mode.ocr{background:#fef3c7;color:#92400e;}
 
-/* BUTTONS */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;border:none;border-radius:var(--rs);font-weight:600;cursor:pointer;transition:all .15s;font-size:14px;}
 .btn-primary{background:var(--blue);color:#fff;padding:11px 20px;width:100%;box-shadow:0 2px 8px rgba(37,99,235,.35);}
 .btn-primary:hover:not(:disabled){background:var(--blue-dk);transform:translateY(-1px);}
@@ -75,21 +64,16 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--i
 .btn-dl:hover{background:#047857;transform:translateY(-1px);}
 .btn-dl:disabled{opacity:.35;cursor:not-allowed;transform:none;}
 
-/* PROGRESS */
 #prog-box{display:none;margin-top:16px;}
 .prog-label{font-size:12.5px;color:var(--ink2);margin-bottom:6px;display:flex;justify-content:space-between;}
 .prog-track{height:8px;background:#dbeafe;border-radius:20px;overflow:hidden;}
 .prog-fill{height:100%;background:linear-gradient(90deg,#2563eb,#60a5fa);border-radius:20px;transition:width .4s ease;width:0%;}
 .prog-sub{font-size:11.5px;color:var(--ink3);margin-top:5px;}
 
-/* LOG */
 #log{display:none;margin-top:12px;background:#f8fafc;border:1px solid var(--border);border-radius:var(--rs);padding:10px 12px;max-height:160px;overflow-y:auto;font-size:11.5px;font-family:'JetBrains Mono',monospace;color:var(--ink2);line-height:1.8;}
-.log-ok{color:#059669;} .log-warn{color:#d97706;} .log-err{color:#dc2626;}
+.log-ok{color:#059669;}.log-warn{color:#d97706;}.log-err{color:#dc2626;}
 
-/* RIGHT PANEL — RESULTS */
 .results-wrap{display:flex;flex-direction:column;gap:16px;}
-
-/* SUMMARY CARDS */
 .sum-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
 .sum-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);padding:14px 16px;}
 .sum-lbl{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--ink3);margin-bottom:4px;}
@@ -98,19 +82,12 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--i
 .sum-val.dr{color:var(--red);}
 .sum-val.nt{color:var(--ink);}
 
-/* BANNER */
 .banner{border-radius:var(--rs);padding:11px 14px;display:flex;align-items:flex-start;gap:9px;font-size:13px;}
 .banner.ok{background:var(--green-lt);border:1px solid #6ee7b7;color:#065f46;}
 .banner.warn{background:var(--amber-lt);border:1px solid #fcd34d;color:#78350f;}
 .banner.err{background:var(--red-lt);border:1px solid #fca5a5;color:#991b1b;}
 .banner-icon{flex-shrink:0;font-size:16px;margin-top:1px;}
 
-/* DOWNLOAD ALWAYS VISIBLE */
-.dl-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
-.dl-text h3{font-size:15px;font-weight:700;margin-bottom:3px;}
-.dl-text p{font-size:12.5px;color:var(--ink2);}
-
-/* TABLE */
 .tbl-panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;}
 .tbl-toolbar{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap;align-items:center;background:#fafbff;}
 .s-inp{flex:1;min-width:160px;border:1px solid var(--border);border-radius:var(--rs);padding:7px 12px;font-size:13px;outline:none;font-family:inherit;}
@@ -140,7 +117,6 @@ tbody td{padding:8px 14px;vertical-align:middle;}
 .b-dr{background:#fee2e2;color:#991b1b;}
 .desc-td{max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 
-/* TOASTS */
 #toasts{position:fixed;bottom:24px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px;width:320px;}
 .toast{background:var(--surface);border-radius:var(--rs);border-left:4px solid var(--blue);box-shadow:0 4px 20px rgba(0,0,0,.13);padding:12px 14px;font-size:13px;display:flex;align-items:center;gap:9px;animation:tin .22s ease;}
 @keyframes tin{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
@@ -150,18 +126,17 @@ tbody td{padding:8px 14px;vertical-align:middle;}
 .t-x{margin-left:auto;background:none;border:none;cursor:pointer;font-size:17px;opacity:.4;}
 .t-x:hover{opacity:.9;}
 
-/* SPINNER */
 .spin{display:inline-block;width:15px;height:15px;border:2.5px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:sp .65s linear infinite;}
 @keyframes sp{to{transform:rotate(360deg);}}
 
-/* EMPTY STATE */
 .empty{padding:48px 24px;text-align:center;color:var(--ink3);}
 .empty-icon{font-size:40px;display:block;margin-bottom:10px;}
 .empty p{font-size:14px;}
 
-/* SECTION LABEL */
 .sec{font-size:11.5px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--ink3);margin-bottom:10px;display:flex;align-items:center;gap:8px;}
 .sec::after{content:'';flex:1;height:1px;background:var(--border);}
+
+.mode-hint{font-size:11px;color:var(--ink3);margin-top:6px;padding:6px 10px;background:#fffbeb;border:1px solid #fde68a;border-radius:var(--rs);}
 </style>
 </head>
 <body>
@@ -180,11 +155,8 @@ tbody td{padding:8px 14px;vertical-align:middle;}
 <div id="toasts"></div>
 
 <div class="main">
-
-  <!-- ══ LEFT PANEL: UPLOAD ══════════════════════════════════ -->
   <div style="display:flex;flex-direction:column;gap:14px;">
 
-    <!-- Upload card -->
     <div class="panel">
       <div class="panel-hdr"><h2>📂 Upload PDFs</h2></div>
       <div class="panel-body">
@@ -195,6 +167,7 @@ tbody td{padding:8px 14px;vertical-align:middle;}
           <div class="dz-s">Up to 12 files · digital or scanned</div>
         </div>
         <div id="chips"></div>
+        <div class="mode-hint" id="mode-hint" style="display:none;">💡 <strong>Click the mode badge</strong> (Digital/OCR) on any file to toggle it manually if auto-detection is wrong.</div>
         <div style="margin-top:14px;">
           <button class="btn btn-primary" id="btn-go" disabled>
             <span id="btn-lbl">⚙ Extract Transactions</span>
@@ -210,7 +183,6 @@ tbody td{padding:8px 14px;vertical-align:middle;}
       </div>
     </div>
 
-    <!-- Download — always visible -->
     <div class="panel">
       <div class="panel-hdr"><h2>📥 Download Excel</h2></div>
       <div class="panel-body">
@@ -222,12 +194,10 @@ tbody td{padding:8px 14px;vertical-align:middle;}
       </div>
     </div>
 
-  </div><!-- /left -->
+  </div>
 
-  <!-- ══ RIGHT PANEL: RESULTS ════════════════════════════════ -->
   <div class="results-wrap">
 
-    <!-- Summary stats -->
     <div id="stats-wrap" style="display:none;">
       <div class="sec">Summary</div>
       <div class="sum-grid">
@@ -239,7 +209,6 @@ tbody td{padding:8px 14px;vertical-align:middle;}
       <div id="v-banner" style="margin-top:10px;"></div>
     </div>
 
-    <!-- Table -->
     <div id="tbl-wrap" style="display:none;">
       <div class="sec">Extracted Transactions</div>
       <div class="tbl-panel">
@@ -266,7 +235,6 @@ tbody td{padding:8px 14px;vertical-align:middle;}
       </div>
     </div>
 
-    <!-- Empty state -->
     <div id="empty-state" class="panel">
       <div class="empty">
         <span class="empty-icon">📊</span>
@@ -274,9 +242,8 @@ tbody td{padding:8px 14px;vertical-align:middle;}
       </div>
     </div>
 
-  </div><!-- /right -->
-
-</div><!-- /main -->
+  </div>
+</div>
 
 <script>
 /* ═══════════════════════════════════════════════════════════════
@@ -286,7 +253,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc =
   'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
 /* ═══════════════════════════════════════════════════════════════
-   CONSTANTS & STATE
+   STATE
 ═══════════════════════════════════════════════════════════════ */
 const MAX_FILES = 12;
 let selectedFiles   = [];
@@ -296,12 +263,12 @@ let allTransactions = [];
    CATEGORY RULES
 ═══════════════════════════════════════════════════════════════ */
 const CATS = [
-  { label:'Salary',    cls:'b-salary', kw:['salary','payroll','payroll','wages','pay slip','direct dep','direct deposit','income','stipend','bonus','commission'] },
+  { label:'Salary',    cls:'b-salary', kw:['salary','payroll','wages','pay slip','direct dep','direct deposit','income','stipend','bonus','commission'] },
   { label:'Rent',      cls:'b-rent',   kw:['rent','lease','landlord','housing','apartment'] },
   { label:'Utilities', cls:'b-util',   kw:['electric','water bill','gas bill','internet','broadband','utility','telecom','telephone','mobile','wifi','cable tv','nea','kukl','worldlink','vianet','pg&e','atmos','comcast','xfinity'] },
-  { label:'Deposit',   cls:'b-dep',    kw:['deposit','zelle payment from','atm check dep','atm cash dep','ach deposit','venmo','cash dep'] },
+  { label:'Deposit',   cls:'b-dep',    kw:['deposit','zelle payment from','atm check dep','atm cash dep','ach deposit','venmo','cash dep','real time transfer recd'] },
   { label:'Transfer',  cls:'b-trf',    kw:['transfer','zelle payment to','wire','ach','neft','rtgs','imps','upi','fonepay','esewa','khalti','online transfer','realtime transfer'] },
-  { label:'Food',      cls:'b-food',   kw:['restaurant','cafe','coffee','dining','grocery','supermarket','swiggy','zomato','canteen','bakery','mcdonald','taco bell','subway','chipotle','doordash','grubhub','whole foods','ralphs','target','walmart','ralph','7-eleven','in-n-out','jon don','del taco','enchilada','liquor','starbucks'] },
+  { label:'Food',      cls:'b-food',   kw:['restaurant','cafe','coffee','dining','grocery','supermarket','swiggy','zomato','canteen','bakery','mcdonald','taco bell','subway','chipotle','doordash','grubhub','whole foods','ralphs','target','walmart','ralph','7-eleven','in-n-out','jon don','del taco','enchilada','liquor','starbucks','carls jr','carl\'s jr'] },
   { label:'Fuel',      cls:'b-fuel',   kw:['arco','chevron','shell','mobil','exxon','bp','fuel','gasoline','gas station','ampm','circle k','76 gas'] },
   { label:'Miscellaneous', cls:'b-misc', kw:[] },
 ];
@@ -319,8 +286,6 @@ function classify(desc) {
    FILE HANDLING
 ═══════════════════════════════════════════════════════════════ */
 const fi = document.getElementById('fi');
-const dz = document.getElementById('drop-zone') || document.getElementById('dz');
-
 fi.addEventListener('change', e => { addFiles([...e.target.files]); e.target.value=''; });
 document.getElementById('dz').addEventListener('dragover',  e => { e.preventDefault(); document.getElementById('dz').classList.add('over'); });
 document.getElementById('dz').addEventListener('dragleave', () => document.getElementById('dz').classList.remove('over'));
@@ -331,39 +296,75 @@ async function addFiles(files) {
     if (!f.name.toLowerCase().endsWith('.pdf') && f.type!=='application/pdf') { toast('Only PDFs: '+f.name, 'err'); continue; }
     if (selectedFiles.length >= MAX_FILES) { toast('Max '+MAX_FILES+' files.','warn'); break; }
     if (selectedFiles.find(s => s.name===f.name)) continue;
-    // Quick scan to decide digital vs OCR
     const mode = await quickScan(f);
-    selectedFiles.push({ file:f, mode });
+    selectedFiles.push({ file:f, name:f.name, mode });
   }
   renderChips();
   document.getElementById('btn-go').disabled = selectedFiles.length===0;
+  document.getElementById('mode-hint').style.display = selectedFiles.length ? '' : 'none';
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   FIX #1 — ROBUST DIGITAL vs OCR DETECTION
+   Old code only checked page 1 with threshold of 80 chars.
+   New code: checks up to 3 pages, uses threshold of 200 chars,
+   and counts meaningful words (not just any chars).
+   A PDF is "digital" if ANY of the sampled pages has enough text.
+═══════════════════════════════════════════════════════════════ */
 async function quickScan(file) {
-  // Read first page, count text chars
   try {
     const buf = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument({data:buf}).promise;
-    const page = await pdf.getPage(1);
-    const content = await page.getTextContent();
-    const chars = content.items.map(i=>i.str).join('').trim().length;
-    return chars < 80 ? 'ocr' : 'digital';
-  } catch { return 'ocr'; }
+    const pdf = await pdfjsLib.getDocument({data: new Uint8Array(buf)}).promise;
+    const pagesToCheck = Math.min(pdf.numPages, 3);
+
+    let maxChars = 0;
+    let totalMeaningfulWords = 0;
+
+    for (let p = 1; p <= pagesToCheck; p++) {
+      const page    = await pdf.getPage(p);
+      const content = await page.getTextContent({ normalizeWhitespace: true });
+      const text    = content.items.map(i => i.str).join(' ').trim();
+      const chars   = text.length;
+      // Count words that are at least 2 chars (filters out OCR noise single chars)
+      const words   = text.split(/\s+/).filter(w => w.length >= 2).length;
+
+      if (chars > maxChars) maxChars = chars;
+      totalMeaningfulWords += words;
+    }
+
+    // Digital if: any page has 200+ chars AND we found 30+ meaningful words across sampled pages
+    if (maxChars >= 200 && totalMeaningfulWords >= 30) return 'digital';
+    return 'ocr';
+
+  } catch(e) {
+    console.warn('quickScan error:', e);
+    return 'ocr';
+  }
+}
+
+function toggleMode(name) {
+  const sf = selectedFiles.find(f => f.name === name);
+  if (sf) {
+    sf.mode = sf.mode === 'digital' ? 'ocr' : 'digital';
+    renderChips();
+    toast(`"${name}" switched to ${sf.mode.toUpperCase()} mode`, 'info');
+  }
 }
 
 function removeFile(name) {
-  selectedFiles = selectedFiles.filter(f => f.file.name !== name);
+  selectedFiles = selectedFiles.filter(f => f.name !== name);
   renderChips();
   document.getElementById('btn-go').disabled = selectedFiles.length===0;
+  document.getElementById('mode-hint').style.display = selectedFiles.length ? '' : 'none';
 }
 
 function renderChips() {
   document.getElementById('chips').innerHTML = selectedFiles.map(sf => `
     <div class="chip">
       <span style="font-size:16px">${sf.mode==='ocr'?'🔍':'📝'}</span>
-      <span class="chip-name">${esc(sf.file.name)}</span>
-      <span class="chip-mode ${sf.mode==='ocr'?'ocr':''}">${sf.mode==='ocr'?'OCR':'Digital'}</span>
-      <button class="chip-rm" onclick="removeFile(${JSON.stringify(sf.file.name)})">×</button>
+      <span class="chip-name" title="${esc(sf.name)}">${esc(sf.name)}</span>
+      <span class="chip-mode ${sf.mode==='ocr'?'ocr':''}" onclick="toggleMode(${JSON.stringify(sf.name)})" title="Click to toggle mode">${sf.mode==='ocr'?'OCR':'Digital'}</span>
+      <button class="chip-rm" onclick="removeFile(${JSON.stringify(sf.name)})">×</button>
     </div>`).join('');
 }
 
@@ -377,10 +378,11 @@ function clearAll() {
   document.getElementById('prog-box').style.display = 'none';
   document.getElementById('log').style.display      = 'none';
   document.getElementById('log').innerHTML           = '';
-  document.getElementById('stats-wrap').style.display = 'none';
-  document.getElementById('tbl-wrap').style.display   = 'none';
+  document.getElementById('stats-wrap').style.display  = 'none';
+  document.getElementById('tbl-wrap').style.display    = 'none';
   document.getElementById('empty-state').style.display = '';
-  document.getElementById('dl-info').style.display = 'none';
+  document.getElementById('dl-info').style.display     = 'none';
+  document.getElementById('mode-hint').style.display   = 'none';
   document.getElementById('tbody').innerHTML = '';
 }
 
@@ -417,6 +419,11 @@ async function runExtraction() {
       if (sf.mode === 'digital') {
         text = await extractDigital(f);
         logln(`   ✓ Extracted ${text.length} chars`, 'ok');
+        // FIX #2 — fallback: if digital extraction yields very little, auto-switch to OCR
+        if (text.trim().length < 100) {
+          logln(`   ⚠ Very little text from digital mode — falling back to OCR`, 'warn');
+          text = await extractOCR(f, i, total);
+        }
       } else {
         logln(`   🔍 Running OCR… (${(await getPdfPageCount(f))} pages)`, 'warn');
         text = await extractOCR(f, i, total);
@@ -424,21 +431,32 @@ async function runExtraction() {
 
       if (!text.trim()) { logln('   ✗ No text found','err'); continue; }
 
-      // Detect bank format and use appropriate parser
       const bank = detectBank(text);
       logln(`   🏦 Detected format: <b>${bank}</b>`);
 
       let result;
       switch(bank) {
-        case 'Chase':         result = parseChase(text, f.name);       break;
+        case 'Chase':         result = parseChase(text, f.name);         break;
         case 'FirstFidelity': result = parseFirstFidelity(text, f.name); break;
-        default:              result = parseGeneric(text, f.name);      break;
+        default:              result = parseGeneric(text, f.name);        break;
       }
 
       logln(`   ✓ Parsed <b>${result.transactions.length}</b> transaction(s)`, 'ok');
+      if (result.opening !== null) logln(`   · Opening balance: ${fmt(result.opening)}`, 'ok');
+      if (result.closing !== null) logln(`   · Closing balance: ${fmt(result.closing)}`, 'ok');
+
       allTransactions.push(...result.transactions);
-      if (result.opening!==null || result.closing!==null) {
-        balances[f.name] = { opening: result.opening, closing: result.closing };
+
+      // FIX #3 — store per-file balances AND per-file transaction totals for accurate validation
+      if (result.opening !== null || result.closing !== null) {
+        const fileCr = result.transactions.filter(t=>t.type==='Credit').reduce((s,t)=>s+t.amount,0);
+        const fileDr = result.transactions.filter(t=>t.type==='Debit').reduce((s,t)=>s+t.amount,0);
+        balances[f.name] = {
+          opening: result.opening,
+          closing: result.closing,
+          credits: fileCr,
+          debits:  fileDr
+        };
       }
 
     } catch(err) {
@@ -478,7 +496,6 @@ async function runExtraction() {
 
 /* ═══════════════════════════════════════════════════════════════
    BANK FORMAT DETECTOR
-   Looks for unique keywords in each bank's statements.
 ═══════════════════════════════════════════════════════════════ */
 function detectBank(text) {
   const t = text.toLowerCase();
@@ -488,19 +505,18 @@ function detectBank(text) {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   DIGITAL TEXT EXTRACTION  (PDF.js)
-   Groups items by Y coordinate → reconstructs original row layout.
+   DIGITAL TEXT EXTRACTION (PDF.js)
+   Groups text items by Y coordinate to reconstruct row layout.
 ═══════════════════════════════════════════════════════════════ */
 async function extractDigital(file) {
   const buf = await file.arrayBuffer();
-  const pdf = await pdfjsLib.getDocument({data:buf}).promise;
+  const pdf = await pdfjsLib.getDocument({data: new Uint8Array(buf)}).promise;
   let full  = '';
 
   for (let p=1; p<=pdf.numPages; p++) {
     const page    = await pdf.getPage(p);
     const content = await page.getTextContent({normalizeWhitespace:true});
 
-    // Group by Y pos (±2px tolerance)
     const map = {};
     for (const item of content.items) {
       if (!item.str.trim()) continue;
@@ -521,17 +537,16 @@ async function extractDigital(file) {
 
 async function getPdfPageCount(file) {
   const buf = await file.arrayBuffer();
-  const pdf = await pdfjsLib.getDocument({data:buf}).promise;
+  const pdf = await pdfjsLib.getDocument({data: new Uint8Array(buf)}).promise;
   return pdf.numPages;
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   OCR EXTRACTION  (Tesseract.js)
-   Renders each page as high-res canvas → OCR
+   OCR EXTRACTION (Tesseract.js)
 ═══════════════════════════════════════════════════════════════ */
 async function extractOCR(file, fileIdx, totalFiles) {
   const buf  = await file.arrayBuffer();
-  const pdf  = await pdfjsLib.getDocument({data:buf}).promise;
+  const pdf  = await pdfjsLib.getDocument({data: new Uint8Array(buf)}).promise;
   const nPg  = pdf.numPages;
 
   if (!window._ocrW) {
@@ -569,94 +584,92 @@ async function extractOCR(file, fileIdx, totalFiles) {
 
 /* ═══════════════════════════════════════════════════════════════
    CHASE PARSER
-   Chase statements have clear section headers:
-   "DEPOSITS AND ADDITIONS"  → credits
-   "ATM & DEBIT CARD WITHDRAWALS" → debits
-   "ELECTRONIC WITHDRAWALS"  → debits
-   Each row: MM/DD  DESCRIPTION  AMOUNT
+   Sections: DEPOSITS AND ADDITIONS (credit)
+             ATM & DEBIT CARD WITHDRAWALS / ELECTRONIC WITHDRAWALS (debit)
+   Row format: MM/DD  DESCRIPTION  AMOUNT
 ═══════════════════════════════════════════════════════════════ */
 function parseChase(text, fname) {
   const lines = text.split('\n').map(l=>l.trim()).filter(Boolean);
   const transactions = [];
   let opening = null, closing = null;
-  let section = '';  // current section: 'credit' | 'debit' | ''
+  let section = '';
 
-  // Section header patterns
-  const SEC_CR = /deposits\s*and\s*additions/i;
-  const SEC_DR = /atm\s*&\s*debit\s*card\s*withdrawals|electronic\s*withdrawals|fees?\b/i;
-  const SEC_END= /daily\s*ending\s*balance|atm\s*&\s*debit\s*card\s*summary|total\s*(deposits|atm|electronic|fees)/i;
+  const SEC_CR  = /deposits\s*and\s*additions/i;
+  const SEC_DR  = /atm\s*&\s*debit\s*card\s*withdrawals|electronic\s*withdrawals|fees?\b/i;
+  const SEC_END = /daily\s*ending\s*balance|atm\s*&\s*debit\s*card\s*summary|total\s*(deposits|atm|electronic|fees)/i;
 
-  // Balance lines
   const BAL_BEGIN = /beginning\s*balance[^\d]*([\d,]+\.\d{2})/i;
   const BAL_END   = /ending\s*balance[^\d]*([\d,]+\.\d{2})/i;
+  const DATE_RX   = /^(\d{1,2})\/(\d{2})\b/;
 
-  // Chase date: MM/DD (no year)
-  const DATE_RX = /^(\d{1,2})\/(\d{2})\b/;
-
-  // Current statement year — parse from header
-  let stmtYear = new Date().getFullYear();
+  // FIX #4 — more robust year/month detection from Chase statement header
+  let stmtYear  = new Date().getFullYear();
   let stmtMonth = null;
+
   for (const line of lines) {
-    const m = line.match(/(\w+ \d{1,2},\s*\d{4})\s*through/i) || line.match(/(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},\s*(\d{4})/i);
-    if (m) {
-      const d = new Date(m[0].replace(/through.*/i,'').trim());
-      if (!isNaN(d)) { stmtYear = d.getFullYear(); stmtMonth = d.getMonth()+1; }
+    // Chase header: "January 03, 2025 through February 02, 2025"
+    const throughMatch = line.match(/(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},\s*(\d{4})\s+through\s+(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},\s*(\d{4})/i);
+    if (throughMatch) {
+      // Use the END date for stmtYear/stmtMonth (closing period)
+      const endMonthStr = throughMatch[3];
+      const endYear     = parseInt(throughMatch[4]);
+      const months      = {january:1,february:2,march:3,april:4,may:5,june:6,july:7,august:8,september:9,october:10,november:11,december:12};
+      stmtMonth = months[endMonthStr.toLowerCase()] || null;
+      stmtYear  = endYear;
       break;
+    }
+    // Fallback: any "Month DD, YYYY" in header
+    const m = line.match(/(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},\s*(\d{4})/i);
+    if (m) {
+      const months = {january:1,february:2,march:3,april:4,may:5,june:6,july:7,august:8,september:9,october:10,november:11,december:12};
+      stmtMonth = months[m[1].toLowerCase()] || null;
+      stmtYear  = parseInt(m[2]);
     }
   }
 
   function chaseDate(mm, dd) {
-    // Infer year: if month > stmtMonth → previous year
-    let yr = stmtYear;
-    if (stmtMonth && parseInt(mm) > stmtMonth) yr = stmtYear - 1;
-    return `${yr}-${String(mm).padStart(2,'0')}-${String(dd).padStart(2,'0')}`;
+    const m = parseInt(mm);
+    let yr  = stmtYear;
+    // If transaction month is later than statement end month, it's from the prior year
+    if (stmtMonth && m > stmtMonth) yr = stmtYear - 1;
+    return `${yr}-${String(m).padStart(2,'0')}-${String(dd).padStart(2,'0')}`;
   }
 
-  // Balance detection first pass
+  // Balance pass
   for (const line of lines) {
     let m = line.match(BAL_BEGIN);
-    if (m) opening = parseFloat(m[1].replace(/,/g,''));
+    if (m && opening===null) opening = parseFloat(m[1].replace(/,/g,''));
     m = line.match(BAL_END);
     if (m) closing = parseFloat(m[1].replace(/,/g,''));
   }
 
-  // Main pass: section-aware
+  // Section-aware transaction pass
   for (let i=0; i<lines.length; i++) {
     const line = lines[i];
 
-    // Detect section changes
     if (SEC_CR.test(line))  { section='credit'; continue; }
     if (SEC_DR.test(line))  { section='debit';  continue; }
     if (SEC_END.test(line)) { section='';       continue; }
-    if (!section)            continue;
-
-    // Skip header rows like "DATE  DESCRIPTION  AMOUNT"
+    if (!section) continue;
     if (/^date\s+desc/i.test(line) || /^total\s/i.test(line)) continue;
 
-    // Match date at start of line
     const dm = line.match(DATE_RX);
-    if (!dm) {
-      // Might be a continuation description line — skip
-      continue;
-    }
+    if (!dm) continue;
 
     const mm = dm[1], dd = dm[2];
     const iso = chaseDate(mm, dd);
 
-    // Remove date from line → rest is "description  amount"
     let rest = line.slice(dm[0].length).trim();
 
-    // Amount is the last number on the line
-    const amtMatch = rest.match(/([\d,]+\.\d{2})\s*$/);
+    // Handle multi-line transactions
+    let amtMatch = rest.match(/([\d,]+\.\d{2})\s*$/);
     if (!amtMatch) {
-      // Multi-line transaction: collect next lines until we find amount
       let combined = rest;
       for (let j=i+1; j<=Math.min(i+3, lines.length-1); j++) {
         const nx = lines[j];
         if (DATE_RX.test(nx) || SEC_CR.test(nx) || SEC_DR.test(nx)) break;
         combined += ' ' + nx;
-        const am = combined.match(/([\d,]+\.\d{2})\s*$/);
-        if (am) { rest = combined; i=j; break; }
+        if (combined.match(/([\d,]+\.\d{2})\s*$/)) { rest = combined; i=j; break; }
       }
     }
 
@@ -666,11 +679,15 @@ function parseChase(text, fname) {
     const amount = parseFloat(finalAmtM[1].replace(/,/g,''));
     if (amount <= 0) continue;
 
-    // Description = everything before the amount
-    let desc = rest.slice(0, rest.lastIndexOf(finalAmtM[1])).trim();
-    if (!desc) desc = 'Transaction';
+    let desc = rest.slice(0, rest.lastIndexOf(finalAmtM[1])).trim() || 'Transaction';
 
-    transactions.push({ date:iso, description:desc, type:section==='credit'?'Credit':'Debit', amount, category:'', catCls:'', source:fname });
+    transactions.push({
+      date: iso,
+      description: desc,
+      type: section==='credit' ? 'Credit' : 'Debit',
+      amount,
+      category:'', catCls:'', source:fname
+    });
   }
 
   return { transactions, opening, closing };
@@ -678,20 +695,13 @@ function parseChase(text, fname) {
 
 /* ═══════════════════════════════════════════════════════════════
    FIRST FIDELITY PARSER
-   This statement has:
-   Page 1: Summary table with Deposits + Checks Cleared (key data)
-   - "Deposits" section: Date | Description | Amount (right-aligned)
-   - "Electronic Credits": Date | Description | Amount
-   - "Checks Cleared": Check# | Date | Amount | Check# | Date | Amount
-   Format detected via OCR output from scanned pages.
 ═══════════════════════════════════════════════════════════════ */
 function parseFirstFidelity(text, fname) {
   const lines = text.split('\n').map(l=>l.trim()).filter(Boolean);
   const transactions = [];
   let opening = null, closing = null;
 
-  const AMT    = /\$([\d,]+\.\d{2})/g;
-  const AMT2   = /\b([\d,]+\.\d{2})\b/g;
+  const AMT  = /\$([\d,]+\.\d{2})/g;
   const DATE_P = [
     { rx:/\b(\d{2})\/(\d{2})\/(\d{4})\b/, fn:m=>`${m[3]}-${m[1]}-${m[2]}` },
     { rx:/\b(\d{4})-(\d{2})-(\d{2})\b/,   fn:m=>`${m[1]}-${m[2]}-${m[3]}` },
@@ -710,17 +720,15 @@ function parseFirstFidelity(text, fname) {
   const SEC_DAILY  = /^daily\s*balance/i;
   const SEC_OD     = /^overdraft/i;
 
-  // Balance detection
   for (const line of lines) {
     if (/beginning\s*balance/i.test(line)) {
-      const a = [...line.matchAll(AMT)]; if(a.length) opening = toF(a[a.length-1][1]);
+      const a = [...line.matchAll(AMT)]; if(a.length && opening===null) opening = toF(a[a.length-1][1]);
     }
     if (/ending\s*balance/i.test(line)) {
       const a = [...line.matchAll(AMT)]; if(a.length) closing = toF(a[a.length-1][1]);
     }
   }
 
-  // Main parse
   for (let i=0; i<lines.length; i++) {
     const line = lines[i];
 
@@ -734,24 +742,19 @@ function parseFirstFidelity(text, fname) {
       if (!dm) continue;
       const amts = [...line.matchAll(AMT)].map(m=>toF(m[1])).filter(v=>v>0);
       if (!amts.length) {
-        // Amount might be on next line
         const nx = lines[i+1]||'';
         const na = [...nx.matchAll(AMT)].map(m=>toF(m[1])).filter(v=>v>0);
         if (!na.length) continue;
         amts.push(na[0]); i++;
       }
-      let desc = line.replace(dm.raw,'').replace(AMT,'').trim() || (section==='elec'?'Electronic Credit':'Deposit');
+      let desc = line.replace(dm.raw,'').replace(/\$([\d,]+\.\d{2})/g,'').trim() || (section==='elec'?'Electronic Credit':'Deposit');
       transactions.push({ date:dm.iso, description:desc, type:'Credit', amount:amts[amts.length-1], category:'', catCls:'', source:fname });
 
     } else if (section==='checks') {
-      // Checks Cleared: rows look like:  49405  07/22/2024  $13.17   49406  07/11/2024  $181.63
-      // Sometimes two checks per line
       const dateMatches = [...line.matchAll(/\b(\d{2})\/(\d{2})\/(\d{4})\b/g)];
       const amtMatches  = [...line.matchAll(/\$([\d,]+\.\d{2})/g)];
       const chkMatches  = [...line.matchAll(/\b(\d{4,6})\b/g)];
-
-      if (dateMatches.length === 0) continue;
-
+      if (!dateMatches.length) continue;
       for (let k=0; k<dateMatches.length; k++) {
         const dm  = dateMatches[k];
         const amt = amtMatches[k];
@@ -763,7 +766,6 @@ function parseFirstFidelity(text, fname) {
     }
   }
 
-  // If very few transactions found (OCR noise), try generic
   if (transactions.length < 3) {
     logln('   ↩ First Fidelity parser got < 3 rows, trying generic…','warn');
     const g = parseGeneric(text, fname);
@@ -775,9 +777,7 @@ function parseFirstFidelity(text, fname) {
 
 /* ═══════════════════════════════════════════════════════════════
    GENERIC PARSER
-   Handles any date-anchored statement format.
-   Strategy: find lines with a date AND at least one amount;
-   determine CR/DR from context words.
+   Handles any date-anchored format.
 ═══════════════════════════════════════════════════════════════ */
 function parseGeneric(text, fname) {
   const lines = text.split('\n').map(l=>l.trim()).filter(Boolean);
@@ -801,7 +801,7 @@ function parseGeneric(text, fname) {
   function toF(s){ return parseFloat(s.replace(/,/g,''))||0; }
 
   for (const line of lines) {
-    if (OPEN_RX.test(line)){ const a=line.match(AMT_RX); if(a) opening=toF(a[a.length-1]); }
+    if (OPEN_RX.test(line)){ const a=line.match(AMT_RX); if(a && opening===null) opening=toF(a[a.length-1]); }
     if (CLOS_RX.test(line)){ const a=line.match(AMT_RX); if(a) closing=toF(a[a.length-1]); }
   }
 
@@ -836,6 +836,8 @@ function parseGeneric(text, fname) {
 
 /* ═══════════════════════════════════════════════════════════════
    STATS & VALIDATION
+   FIX #3 — Use per-file credits/debits for balance check
+   (not the global total which mixes multiple files)
 ═══════════════════════════════════════════════════════════════ */
 function renderStats(balances) {
   const credits = allTransactions.filter(t=>t.type==='Credit').reduce((s,t)=>s+t.amount,0);
@@ -851,22 +853,34 @@ function renderStats(balances) {
 
   const vb = document.getElementById('v-banner');
   if (!allTransactions.length) {
-    vb.innerHTML = `<div class="banner err"><span class="banner-icon">❌</span><div><strong>No transactions extracted.</strong> Try switching the file to OCR mode by clearing and re-uploading.</div></div>`;
+    vb.innerHTML = `<div class="banner err"><span class="banner-icon">❌</span><div><strong>No transactions extracted.</strong> Try toggling the file to OCR mode.</div></div>`;
     return;
   }
 
-  let mis = '';
+  let mismatches = [];
+  let validated  = 0;
+
   for (const [fn, b] of Object.entries(balances||{})) {
-    if (b.opening!==null && b.closing!==null) {
-      const exp  = parseFloat((b.opening + credits - debits).toFixed(2));
-      const act  = parseFloat(b.closing.toFixed(2));
-      const diff = Math.abs(exp-act);
-      if (diff > 1) mis += `<div>${esc(fn)}: expected ${fmt(exp)}, found ${fmt(act)} (Δ ${fmt(diff)})</div>`;
+    if (b.opening !== null && b.closing !== null) {
+      // Expected closing = opening + file's own credits - file's own debits
+      const expected = parseFloat((b.opening + b.credits - b.debits).toFixed(2));
+      const actual   = parseFloat(b.closing.toFixed(2));
+      const diff     = Math.abs(expected - actual);
+      if (diff > 1) {
+        mismatches.push(`${esc(fn)}: expected ${fmt(expected)}, found ${fmt(actual)} (Δ ${fmt(diff)})`);
+      } else {
+        validated++;
+      }
     }
   }
-  if (mis) vb.innerHTML = `<div class="banner warn"><span class="banner-icon">⚠️</span><div><strong>Balance mismatch.</strong> ${mis}</div></div>`;
-  else if (Object.keys(balances||{}).length) vb.innerHTML = `<div class="banner ok"><span class="banner-icon">✅</span><div>Balance validation passed.</div></div>`;
-  else vb.innerHTML = `<div class="banner warn"><span class="banner-icon">ℹ️</span><div>Opening/closing balance not detected — verify manually.</div></div>`;
+
+  if (mismatches.length) {
+    vb.innerHTML = `<div class="banner warn"><span class="banner-icon">⚠️</span><div><strong>Balance mismatch detected.</strong> Some transactions may be missing.<br>${mismatches.map(m=>`<div style="margin-top:4px;font-size:12px">${m}</div>`).join('')}<div style="margin-top:6px;font-size:12px">Tip: If the file shows "Digital" but extraction looks wrong, click the badge to switch to OCR mode and re-run.</div></div></div>`;
+  } else if (validated > 0) {
+    vb.innerHTML = `<div class="banner ok"><span class="banner-icon">✅</span><div>Balance validation passed for ${validated} file(s).</div></div>`;
+  } else {
+    vb.innerHTML = `<div class="banner warn"><span class="banner-icon">ℹ️</span><div>Opening/closing balance not detected — verify totals manually.</div></div>`;
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -907,9 +921,8 @@ function filterTable() {
 function downloadExcel() {
   if (!allTransactions.length) { toast('No transactions to export.','warn'); return; }
 
-  const wb  = XLSX.utils.book_new();
+  const wb = XLSX.utils.book_new();
 
-  // Sheet 1: Transactions
   const ws1 = XLSX.utils.aoa_to_sheet([
     ['Date','Description','Type','Amount','Category','Source File'],
     ...allTransactions.map(t=>[
@@ -921,7 +934,6 @@ function downloadExcel() {
   ws1['!cols'] = [{wch:14},{wch:52},{wch:10},{wch:16},{wch:18},{wch:30}];
   XLSX.utils.book_append_sheet(wb, ws1, 'Transactions');
 
-  // Sheet 2: Summary
   const credits = allTransactions.filter(t=>t.type==='Credit').reduce((s,t)=>s+t.amount,0);
   const debits  = allTransactions.filter(t=>t.type==='Debit').reduce((s,t)=>s+t.amount,0);
   const ws2 = XLSX.utils.aoa_to_sheet([
@@ -937,7 +949,6 @@ function downloadExcel() {
   ws2['!cols'] = [{wch:26},{wch:18}];
   XLSX.utils.book_append_sheet(wb, ws2, 'Summary');
 
-  // Sheet 3: By Source
   const sources = [...new Set(allTransactions.map(t=>t.source))];
   const ws3rows = [['Source File','Transactions','Credits','Debits','Net']];
   for (const src of sources) {
@@ -958,18 +969,18 @@ function downloadExcel() {
    HELPERS
 ═══════════════════════════════════════════════════════════════ */
 function setP(pct, label, sub) {
-  if (pct!==null)   { document.getElementById('prog-bar').style.width = pct+'%'; document.getElementById('prog-pct').textContent = pct+'%'; }
-  if (label!==null)  document.getElementById('prog-lbl').textContent  = label;
-  if (sub!==null)    document.getElementById('prog-sub').textContent  = sub||'';
+  if (pct!==null)  { document.getElementById('prog-bar').style.width = pct+'%'; document.getElementById('prog-pct').textContent = pct+'%'; }
+  if (label!==null) document.getElementById('prog-lbl').textContent  = label;
+  if (sub!==null)   document.getElementById('prog-sub').textContent  = sub||'';
 }
 
 function logln(html, cls='') {
-  const box = document.getElementById('log');
+  const box  = document.getElementById('log');
   const span = document.createElement('div');
   span.className = cls ? 'log-'+cls : '';
   span.innerHTML = html;
   box.appendChild(span);
-  box.scrollTop = box.scrollHeight;
+  box.scrollTop  = box.scrollHeight;
 }
 
 function fmt(n){ return Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
